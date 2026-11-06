@@ -823,7 +823,7 @@ Both contributors work these together; `S-02` and `S-03` may be split one-each a
   - `disproved` rows say "structurally impossible (no grant)" and never "blocked by policy".
   - Table is accessible: header cells `scope="col"`, rows selectable with Enter, tested.
 
-#### [ ] FE-06 · Replay transcript with untrusted content rendered safely as text
+#### [x] FE-06 · Replay transcript with untrusted content rendered safely as text
 - **Workstream:** frontend · **Priority:** P0 · **Estimate:** 3h
 - **Depends on:** `FE-02`, `FE-03`
 - **Deliverable:** `src/views/ReplayView.tsx`, `src/components/replay/EventTimeline.tsx` (seq, actor, tool, decision

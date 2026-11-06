@@ -41,6 +41,9 @@ export type PathStatus = (typeof PATH_STATUSES)[number];
 export const REPLAY_DECISIONS = ['allowed', 'blocked', 'not_executed'] as const;
 export type ReplayDecision = (typeof REPLAY_DECISIONS)[number];
 
+export const DECISION_ALLOWED: ReplayDecision = 'allowed';
+export const DECISION_BLOCKED: ReplayDecision = 'blocked';
+
 export const POLICY_DECISIONS = ['allow', 'deny'] as const;
 export type PolicyDecision = (typeof POLICY_DECISIONS)[number];
 
