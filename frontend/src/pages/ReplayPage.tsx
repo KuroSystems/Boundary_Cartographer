@@ -1,4 +1,5 @@
 import { useDemoRun } from '../api/useDemoData';
+import { DECISION_TO_PILL, STATUS_DISPROVED } from '../api/types';
 import { StatusPill } from '../components/StatusPill';
 
 export function ReplayPage() {
@@ -28,9 +29,7 @@ export function ReplayPage() {
               <td className="mono">{e.tool}</td>
               <td className="mono">{e.actor}</td>
               <td>
-                <StatusPill
-                  status={e.decision === 'allowed' ? 'allowed' : e.decision === 'blocked' ? 'blocked' : 'disproved'}
-                />
+                <StatusPill status={DECISION_TO_PILL[e.decision] ?? STATUS_DISPROVED} />
               </td>
               <td>{String(e.executed)}</td>
               <td className="mono">{e.policy.rule_ids.join(', ') || '—'}</td>

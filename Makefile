@@ -33,4 +33,5 @@ verify:  ## contract + fixture validation + ruff + pytest + typecheck + lint + t
 	cd frontend && npm run typecheck
 	cd frontend && npm run lint
 	$(MAKE) test-frontend
+	cd frontend && npm run codegen:types >/dev/null 2>&1 && git diff --exit-code --quiet -- src/api/generated.ts
 	cd frontend && npm run build

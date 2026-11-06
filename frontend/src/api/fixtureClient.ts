@@ -1,9 +1,11 @@
-// fixtureClient — serves the frozen contract fixtures directly (FE-01).
+// fixtureClient — serves the frozen contract fixtures directly (FE-01/FE-02).
 // Used when VITE_API_MODE=fixture (the default): no backend required.
+// Fixtures are validated against the Zod contract mirrors at load time.
 
 import scenarioFixture from '../../../contract/fixtures/demo_scenario.json';
 import runFixture from '../../../contract/fixtures/run.demo.json';
-import type { ApiClient } from './client';
+import { ApiError, type ApiClient } from './client';
+import { parseRunResponse, parseScenarioResponse } from './parse';
 import type {
   ApprovalDecisionRequest,
   ApprovalState,
@@ -12,8 +14,8 @@ import type {
   ScenarioResponse,
 } from './types';
 
-const scenario = scenarioFixture as unknown as ScenarioResponse;
-const run = runFixture as unknown as RunResponse;
+const scenario = parseScenarioResponse(scenarioFixture);
+const run = parseRunResponse(runFixture, scenario);
 
 function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
@@ -27,13 +29,12 @@ export const fixtureClient: ApiClient = {
     return clone(scenario);
   },
   async createRun(): Promise<RunResponse> {
-    // The fixture is a completed run; a synthetic decision is returned by
-    // decideApproval (see FE-09 note in tasks.md).
+    // The fixture is a completed run; decideApproval returns a synthetic
+    // decision (records-only, see FE-09 note in tasks.md).
     return clone(run);
   },
   async getRun(runId: string): Promise<RunResponse> {
     if (runId !== run.run_id) {
-      const { ApiError } = await import('./client');
       throw new ApiError(404, 'RUN_NOT_FOUND', 'run not found');
     }
     return clone(run);

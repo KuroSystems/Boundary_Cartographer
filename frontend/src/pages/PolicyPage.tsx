@@ -25,8 +25,8 @@ export function PolicyPage() {
           </thead>
           <tbody>
             {d.changes.map((c) => (
-              <tr key={c.change_id}>
-                <td className="mono">{c.change_id}</td>
+              <tr key={c.target}>
+                <td className="mono">{c.rule_id}</td>
                 <td className="mono">{c.op}</td>
                 <td className="mono">{c.target}</td>
                 <td>{c.summary}</td>

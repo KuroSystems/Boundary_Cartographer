@@ -1,253 +1,98 @@
-// Contract-shaped types for the API adapter seam (FE-01).
-// Structural subsets of contract/openapi.yaml; FE-02 replaces these with
-// openapi-typescript codegen + Zod validation.
+// Contract types (FE-02). The codegen output in generated.ts is the source of
+// truth; this module re-exports it and defines the narrow unions/const arrays
+// — the ONLY place status string literals are written by hand (a grep test in
+// schemas.test.ts enforces this).
 
-export interface HealthResponse {
-  status: 'ok';
-  offline: boolean;
-  policy_engine: string;
-}
+import type { components } from './generated';
 
-export interface ToolEntry {
-  name: string;
-  description: string;
-  required_scopes: string[];
-  purposes: string[];
-  sensitive: boolean;
-  approval_required: boolean;
-}
+type Schemas = components['schemas'];
 
-export interface IdentityEntry {
-  id: string;
-  label: string;
-  allowed_purposes: string[];
-  may_delegate_to: string[];
-}
+// ---- re-exported contract types ----
+export type RunResponse = Schemas['RunResponse'];
+export type ScenarioResponse = Schemas['ScenarioResponse'];
+export type HealthResponse = Schemas['HealthResponse'];
+export type Path = Schemas['Path'];
+export type PathHop = Schemas['PathHop'];
+export type PathReason = Schemas['PathReason'];
+export type PathHistoryEntry = Schemas['PathHistoryEntry'];
+export type ReplayEvent = Schemas['ReplayEvent'];
+export type ReplayPolicyVerdict = Schemas['ReplayPolicyVerdict'];
+export type Graph = Schemas['Graph'];
+export type GraphNode = Schemas['GraphNode'];
+export type GraphEdge = Schemas['GraphEdge'];
+export type Summary = Schemas['Summary'];
+export type PolicyDiff = Schemas['PolicyDiff'];
+export type PolicyDiffChange = Schemas['PolicyDiffChange'];
+export type Recommendation = Schemas['Recommendation'];
+export type Retest = Schemas['Retest'];
+export type ApprovalState = Schemas['ApprovalState'];
+export type ApprovalItem = Schemas['ApprovalItem'];
+export type ApprovalDecisionRequest = Schemas['ApprovalDecisionRequest'];
+export type EvidenceRecord = Schemas['EvidenceRecord'];
 
-export interface GrantEntry {
-  identity: string;
-  tool: string;
-  scopes: string[];
-  purposes: string[];
-  note?: string;
-}
+// ---- narrow unions (status literals live here and only here) ----
+export const RUN_STATUSES = ['completed', 'failed'] as const;
+export type RunStatus = (typeof RUN_STATUSES)[number];
 
-export interface PolicyRuleMeta {
-  id: string;
-  name: string;
-  summary: string;
-}
+export const PATH_STATUSES = ['candidate', 'allowed', 'blocked', 'disproved'] as const;
+export type PathStatus = (typeof PATH_STATUSES)[number];
 
-export interface PolicyMeta {
-  policy_id: string;
-  engine: string;
-  rules: PolicyRuleMeta[];
-}
+export const REPLAY_DECISIONS = ['allowed', 'blocked', 'not_executed'] as const;
+export type ReplayDecision = (typeof REPLAY_DECISIONS)[number];
 
-export interface SeededDocument {
-  id: string;
-  title: string;
-  trust_level: string;
-  content_is_data: boolean;
-  content: string;
-}
+export const POLICY_DECISIONS = ['allow', 'deny'] as const;
+export type PolicyDecision = (typeof POLICY_DECISIONS)[number];
 
-export interface ScenarioResponse {
-  schema_version: string;
-  scenario_id: string;
-  name: string;
-  manifest: { tools: ToolEntry[] };
-  identities: IdentityEntry[];
-  grants: GrantEntry[];
-  policy: PolicyMeta;
-  document: SeededDocument;
-  sensitive_sinks: string[];
-}
+export const RULE_IDS = ['R1', 'R2', 'R3'] as const;
+export type RuleId = (typeof RULE_IDS)[number];
 
-export type PathStatus = 'candidate' | 'allowed' | 'blocked' | 'disproved';
+export const CHANGE_OPS = ['revoke_grant', 'add_guard', 'drop_inheritance', 'modify'] as const;
+export type ChangeOp = (typeof CHANGE_OPS)[number];
 
-export interface PathHop {
-  step: number;
-  tool: string;
-  actor: string;
-  purpose: string;
-}
+export const APPROVAL_STATUSES = ['pending', 'approved', 'rejected'] as const;
+export type ApprovalStatus = (typeof APPROVAL_STATUSES)[number];
 
-export interface PathReason {
-  code: string;
-  rule_id: string;
-  message: string;
-  evidence_ids: string[];
-}
+export const RETEST_IDS = ['RT-1', 'RT-2', 'RT-3'] as const;
+export type RetestId = (typeof RETEST_IDS)[number];
 
-export interface Path {
-  path_id: string;
-  status: PathStatus;
-  basis: string;
-  hops: PathHop[];
-  reasons: PathReason[];
-  rule_refs: string[];
-}
+export const EVIDENCE_KINDS = ['source', 'manifest', 'grant', 'policy_rule', 'event'] as const;
+export type EvidenceKind = (typeof EVIDENCE_KINDS)[number];
 
-export interface ReplayPolicyVerdict {
-  decision: 'allow' | 'deny';
-  rule_ids: string[];
-  reasons: PathReason[];
-}
+export const NODE_KINDS = ['source', 'identity', 'tool', 'data_scope', 'output'] as const;
+export type NodeKind = (typeof NODE_KINDS)[number];
 
-export interface ReplayEvent {
-  event_id: string;
-  tool: string;
-  actor: string;
-  purpose: string;
-  decision: 'allowed' | 'blocked' | 'not_executed';
-  executed: boolean;
-  trust_level: string;
-  taint_labels: string[];
-  policy: ReplayPolicyVerdict;
-  input_preview: string;
-  source_ids: string[];
-}
+export const EDGE_KINDS = [
+  'flows_to',
+  'may_invoke',
+  'reads',
+  'produces',
+  'derived_from',
+  'delegates_to',
+] as const;
+export type EdgeKind = (typeof EDGE_KINDS)[number];
 
-export interface GraphNode {
-  id: string;
-  kind: string;
-  label: string;
-  risk?: 'low' | 'medium' | 'high' | 'critical';
-  scopes?: string[];
-  source_ids: string[];
-}
+export const TRUST_LEVELS = ['trusted', 'untrusted', 'derived_untrusted', 'mixed'] as const;
+export type TrustLevel = (typeof TRUST_LEVELS)[number];
 
-export interface GraphEdge {
-  id: string;
-  from: string;
-  to: string;
-  kind: string;
-  trust?: string;
-  purposes?: string[];
-  scopes?: string[];
-  source_ids: string[];
-}
+export const PATH_BASES = ['graph_reachability', 'policy_verifier'] as const;
+export type PathBasis = (typeof PATH_BASES)[number];
 
-export interface Graph {
-  nodes: GraphNode[];
-  edges: GraphEdge[];
-}
+// Named status constants — use these instead of bare literals anywhere else.
+export const STATUS_CANDIDATE: PathStatus = 'candidate';
+export const STATUS_ALLOWED: PathStatus = 'allowed';
+export const STATUS_BLOCKED: PathStatus = 'blocked';
+export const STATUS_DISPROVED: PathStatus = 'disproved';
+export const BASIS_GRAPH_REACHABILITY: PathBasis = 'graph_reachability';
 
-export interface SummaryCounts {
-  nodes: number;
-  edges: number;
-  candidate_paths: number;
-  allowed_paths: number;
-  blocked_paths: number;
-  disproved_paths: number;
-}
+export const PURPOSES = ['document_summarization', 'finance_reporting'] as const;
+export type Purpose = (typeof PURPOSES)[number];
 
-export interface Summary {
-  headline: string;
-  counts: SummaryCounts;
-  sensitive_sinks: string[];
-  tools_tested: number;
-  identities: number;
-  rules: number;
-}
+export const NODE_RISKS = ['low', 'medium', 'high', 'critical'] as const;
+export type NodeRisk = (typeof NODE_RISKS)[number];
 
-export interface PolicySnapshotRef {
-  policy_id: string;
-  rules: PolicyRuleMeta[];
-  grants: GrantEntry[];
-}
-
-export interface PolicyDiffChange {
-  change_id: string;
-  op: 'revoke_grant' | 'add_guard' | 'drop_inheritance' | 'modify';
-  target: string;
-  summary: string;
-}
-
-export interface PolicyDiff {
-  before: PolicySnapshotRef;
-  after: PolicySnapshotRef;
-  changes: PolicyDiffChange[];
-  simulated: boolean;
-}
-
-export interface RecommendationChange {
-  change_id: string;
-  op: string;
-  target: string;
-  summary: string;
-}
-
-export interface Recommendation {
-  recommendation_id: string;
-  changes: RecommendationChange[];
-  generated_from: string[];
-}
-
-export interface Retest {
-  retest_id: string;
-  name: string;
-  path_ids: string[];
-  expected: string;
-  actual: string;
-  passed: boolean;
-  evidence_ids: string[];
-}
-
-export interface ApprovalItem {
-  approval_id: string;
-  subject: { type: string; id: string };
-  status: 'pending' | 'approved' | 'rejected';
-  requested_at: string;
-  decided_by: string | null;
-  decided_at: string | null;
-  note: string | null;
-  applied: boolean;
-  simulated: boolean;
-  effect: string;
-}
-
-export interface ApprovalState {
-  status: 'pending' | 'approved' | 'rejected';
-  items: ApprovalItem[];
-}
-
-export interface ApprovalDecisionRequest {
-  approval_id: string;
-  decision: 'approve' | 'reject';
-  decided_by?: string | null;
-  note?: string | null;
-}
-
-export interface EvidenceRecord {
-  evidence_id: string;
-  kind: string;
-  run_id: string;
-  captured_at: string;
-  source_id: string;
-  summary: string;
-  hash: string;
-  prev_hash: string | null;
-  trace: { path_ids: string[]; event_ids: string[] };
-}
-
-export interface RunResponse {
-  schema_version: string;
-  run_id: string;
-  scenario_id: string;
-  status: 'completed' | 'failed';
-  deterministic: boolean;
-  generated_at: string;
-  input_digest: string;
-  engine: { policy_engine: string; orchestrator: string };
-  summary: Summary;
-  graph: Graph;
-  paths: Path[];
-  replay_events: ReplayEvent[];
-  policy_diff: PolicyDiff;
-  recommendation: Recommendation;
-  retests: Retest[];
-  approval: ApprovalState;
-  evidence: EvidenceRecord[];
-}
+// Map a replay decision to its pill style. Literals live here only.
+export const DECISION_TO_PILL: Record<string, PathStatus> = {
+  allowed: 'allowed',
+  blocked: 'blocked',
+  not_executed: 'disproved',
+};

@@ -766,7 +766,7 @@ Both contributors work these together; `S-02` and `S-03` may be split one-each a
   - Route-level error boundary + a visible "fixture data" indicator when in fixture mode.
   - `npm test -- --run` green (shell smoke test), `npm run build` succeeds, `npm run typecheck` clean.
 
-#### [ ] FE-02 · Contract types, codegen, and Zod validation of the fixture
+#### [x] FE-02 · Contract types, codegen, and Zod validation of the fixture
 - **Workstream:** frontend · **Priority:** P0 · **Estimate:** 2h
 - **Depends on:** `S-02`, `S-03`
 - **Deliverable:** `npm run codegen:types` → `src/api/generated.ts` (committed), `src/api/types.ts` (re-exports +

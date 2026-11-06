@@ -1,4 +1,5 @@
 import { useDemoRun, useScenario } from '../api/useDemoData';
+import { STATUS_ALLOWED, STATUS_BLOCKED, STATUS_CANDIDATE, STATUS_DISPROVED } from '../api/types';
 import { StatusPill } from '../components/StatusPill';
 
 export function OverviewPage() {
@@ -26,18 +27,18 @@ export function OverviewPage() {
         <h2>Path verdicts</h2>
         <div className="counts">
           <span>
-            <span className="count">{c.blocked_paths}</span> <StatusPill status="blocked" />
+            <span className="count">{c.blocked_paths}</span> <StatusPill status={STATUS_BLOCKED} />
           </span>
           <span>
-            <span className="count">{c.allowed_paths}</span> <StatusPill status="allowed" />
+            <span className="count">{c.allowed_paths}</span> <StatusPill status={STATUS_ALLOWED} />
           </span>
           <span>
             <span className="count">{c.candidate_paths}</span>{' '}
-            <StatusPill status="candidate" />
+            <StatusPill status={STATUS_CANDIDATE} />
           </span>
           <span>
             <span className="count">{c.disproved_paths}</span>{' '}
-            <StatusPill status="disproved" />
+            <StatusPill status={STATUS_DISPROVED} />
           </span>
         </div>
         <table className="data">
