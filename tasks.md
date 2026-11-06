@@ -427,7 +427,7 @@ Both contributors work these together; `S-02` and `S-03` may be split one-each a
 
 ---
 
-#### [ ] S-01 · Repository scaffold, toolchain, and run commands
+#### [x] S-01 · Repository scaffold, toolchain, and run commands
 - **Workstream:** shared (both) · **Priority:** P0 · **Estimate:** 1.5h
 - **Depends on:** —
 - **Deliverable:** `README.md` (run commands, offline rule), `Makefile` (`bootstrap`, `backend`, `frontend`,
