@@ -102,6 +102,11 @@ def build_graph(fixtures: LoadedFixtures) -> nx.DiGraph:
                   {"kind": "flows_to", "trust": "untrusted", "source_ids": [doc_id]}))
     edges.append(("output:summary", "identity:document_assistant",
                   {"kind": "flows_to", "trust": "derived_untrusted", "source_ids": [doc_id]}))
+    # document content flows read -> summarize, and the summary is produced for the actor
+    edges.append(("tool:document.read", "tool:document.summarize",
+                  {"kind": "flows_to", "trust": "untrusted", "source_ids": [doc_id]}))
+    edges.append(("tool:document.summarize", "identity:document_assistant",
+                  {"kind": "flows_to", "trust": "derived_untrusted", "source_ids": [doc_id]}))
 
     for idx, (u, v, attrs) in enumerate(edges, start=1):
         g.add_edge(u, v, edge_id=f"edge:{idx:02d}", **attrs)

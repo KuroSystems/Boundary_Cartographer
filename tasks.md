@@ -587,7 +587,7 @@ Both contributors work these together; `S-02` and `S-03` may be split one-each a
   - Graph build is pure: same fixtures ⇒ identical serialized JSON (snapshot equality).
   - No `may_invoke` edge `document_assistant → finance.export` exists (this powers the `disproved` P4 case).
 
-#### [ ] BE-06 · Candidate path search with candidate/disproved labelling
+#### [x] BE-06 · Candidate path search with candidate/disproved labelling
 - **Workstream:** backend · **Priority:** P0 · **Estimate:** 2.5h
 - **Depends on:** `BE-05`
 - **Deliverable:** `backend/app/graph/paths.py` — bounded `nx.all_simple_paths` (max 5 hops, deterministic sort by
