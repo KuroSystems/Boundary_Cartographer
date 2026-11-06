@@ -471,7 +471,7 @@ Both contributors work these together; `S-02` and `S-03` may be split one-each a
   - Exactly 4 tools, exactly 2 identities, exactly 3 rules (`R1`, `R2`, `R3`) — asserted by the validation script.
   - Frontend can render this file with no backend running (verified manually by the FE contributor).
 
-#### [ ] S-04 · Offline verification harness and dependency rules
+#### [x] S-04 · Offline verification harness and dependency rules
 - **Workstream:** shared (both) · **Priority:** P1 · **Estimate:** 1h
 - **Depends on:** `S-01`
 - **Deliverable:** `scripts/offline_check.sh` (runs `make test-backend`, `make test-frontend`, `make demo` with
@@ -483,7 +483,7 @@ Both contributors work these together; `S-02` and `S-03` may be split one-each a
     here just runs it).
   - `make verify` runs schema validation + both test suites + typecheck + build in one command.
 
-#### [ ] S-05 · ADR: policy engine, tool boundary, and role templates
+#### [x] S-05 · ADR: policy engine, tool boundary, and role templates
 - **Workstream:** shared (both) · **Priority:** P0 · **Estimate:** 1h
 - **Depends on:** `S-01`
 - **Deliverable:** `docs/adr/0001-policy-engine.md` (deterministic Python evaluator as source of truth; OPA/Rego
