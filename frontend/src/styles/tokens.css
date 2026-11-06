@@ -1,0 +1,185 @@
+/* Design tokens (FE-01). Status colors are CSS variables; candidate is amber
+   and dashed, allowed green, blocked red, disproved gray. */
+
+:root {
+  --status-candidate: #d97706; /* amber */
+  --status-allowed: #16a34a;   /* green */
+  --status-blocked: #dc2626;   /* red */
+  --status-disproved: #6b7280; /* gray */
+
+  --bg: #0f172a;
+  --bg-panel: #1e293b;
+  --bg-inset: #0b1220;
+  --text: #e2e8f0;
+  --text-dim: #94a3b8;
+  --accent: #38bdf8;
+  --border: #334155;
+  --mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+code,
+.mono {
+  font-family: var(--mono);
+}
+
+/* ---- status pill ---- */
+.status-pill {
+  display: inline-block;
+  padding: 0.1rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.status-pill.status-candidate {
+  color: var(--status-candidate);
+  border-color: var(--status-candidate);
+  border-style: dashed;
+}
+
+.status-pill.status-allowed {
+  color: var(--status-allowed);
+  border-color: var(--status-allowed);
+}
+
+.status-pill.status-blocked {
+  color: var(--status-blocked);
+  border-color: var(--status-blocked);
+}
+
+.status-pill.status-disproved {
+  color: var(--status-disproved);
+  border-color: var(--status-disproved);
+}
+
+/* ---- app shell ---- */
+.app-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 1rem;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border);
+}
+
+.app-header h1 {
+  font-size: 1.05rem;
+  margin: 0;
+}
+
+.chip {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.chip.offline {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.chip.fixture {
+  color: var(--status-candidate);
+  border-color: var(--status-candidate);
+  border-style: dashed;
+}
+
+.chip.scenario {
+  color: var(--text-dim);
+}
+
+.app-nav {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.4rem 1rem;
+  background: var(--bg-inset);
+  border-bottom: 1px solid var(--border);
+}
+
+.app-nav a {
+  color: var(--text-dim);
+  text-decoration: none;
+  font-size: 0.85rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+}
+
+.app-nav a:hover {
+  color: var(--text);
+}
+
+.app-nav a.active {
+  color: var(--text);
+  background: var(--bg-panel);
+}
+
+.app-main {
+  padding: 1rem;
+}
+
+.panel {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.9rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.panel h2 {
+  margin-top: 0;
+  font-size: 0.95rem;
+}
+
+table.data {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.82rem;
+}
+
+table.data th,
+table.data td {
+  text-align: left;
+  padding: 0.3rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+table.data th {
+  color: var(--text-dim);
+  font-weight: 600;
+}
+
+.counts {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.counts .count {
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.error-boundary {
+  padding: 2rem;
+  color: var(--status-blocked);
+}

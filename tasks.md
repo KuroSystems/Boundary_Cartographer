@@ -750,7 +750,7 @@ Both contributors work these together; `S-02` and `S-03` may be split one-each a
 
 ---
 
-#### [ ] FE-01 · App shell, routing, theming, and API adapter seam
+#### [x] FE-01 · App shell, routing, theming, and API adapter seam
 - **Workstream:** frontend · **Priority:** P0 · **Estimate:** 2h
 - **Depends on:** `S-01`, `S-04`
 - **Deliverable:** `frontend/src/main.tsx`, `src/App.tsx` (routes: `/` overview, `/graph`, `/replay`, `/policy`,

@@ -9,6 +9,8 @@ export default defineConfig({
     host: true,
     // Accept the Arena live-preview host (and any host) so the demo loads in the preview iframe.
     allowedHosts: true,
+    // The fixture client imports contract/fixtures/*.json from the repo root.
+    fs: { allow: ['..'] },
     proxy: {
       '/api': {
         target: 'http://localhost:8000',
