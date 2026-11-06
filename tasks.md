@@ -662,7 +662,7 @@ Both contributors work these together; `S-02` and `S-03` may be split one-each a
   - Orchestrator trace is written as evidence records (`kind: "orchestration"`) with per-role timings stripped or
     fixed (no wall-clock variability in the compared payload).
 
-#### [ ] BE-10 · Least-privilege recommendation, in-memory policy diff, and retests
+#### [x] BE-10 · Least-privilege recommendation, in-memory policy diff, and retests
 - **Workstream:** backend · **Priority:** P0 · **Estimate:** 3h
 - **Depends on:** `BE-07`, `BE-09`
 - **Deliverable:** `backend/app/policy/recommend.py` (RC-1 changes C1–C3 from §2.7, each mapping to verifier findings

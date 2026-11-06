@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 from app.contracts import (
     ApprovalState,
     ApprovalStatus,
+    AuthBasis,
     Basis,
     EvidenceRecord,
     Path,
@@ -32,7 +33,7 @@ from app.orchestrator.messages import (
     ReplayReport,
     VerifyReport,
 )
-from app.policy import load_policy
+from app.policy import ApprovalRef, load_policy
 from app.replay import replay_path
 from app.store.repository import compute_hash
 
@@ -86,13 +87,22 @@ def injection_tester_node(state: dict) -> dict:
     req = ReplayRequest(paths=path_find.paths)
     fixtures = load_fixtures()
     policy = load_policy()
+    # The legitimate finance workflow (P5) runs with a real queue approval.
+    queue = [ApprovalRef(approval_id="ap-queue", status=ApprovalStatus.APPROVED,
+                         origin=AuthBasis.HUMAN_APPROVAL)]
     events: list[ReplayEvent] = []
+    path_event_map: dict[str, list[str]] = {}
     for raw in req.paths:
         path = Path.model_validate(raw)
         if path.status != PathStatus.CANDIDATE:
             continue  # disproved paths have no tool hops to replay
-        events.extend(replay_path(path, fixtures, policy=policy))
-    report = ReplayReport(replay_events=[e.model_dump(mode="json") for e in events])
+        path_events = replay_path(path, fixtures, policy=policy, approvals=queue)
+        path_event_map[path.path_id] = [e.event_id for e in path_events]
+        events.extend(path_events)
+    report = ReplayReport(
+        replay_events=[e.model_dump(mode="json") for e in events],
+        path_event_map=path_event_map,
+    )
     return {"replay": report.model_dump(mode="json")}
 
 
@@ -107,32 +117,35 @@ def policy_verifier_node(state: dict) -> dict:
     replay = ReplayReport.model_validate(state["replay"])
     req = VerifyRequest(paths=path_find.paths, replay_events=replay.replay_events)
 
-    blocked_by_path: dict[str, ReplayEvent] = {}
-    for raw in req.replay_events:
-        event = ReplayEvent.model_validate(raw)
-        if event.decision == "blocked":
-            # attribute the block to the path whose sink matches the blocked tool
-            for raw_path in req.paths:
-                path = Path.model_validate(raw_path)
-                if path.sink == f"tool:{event.tool}" and path.status == PathStatus.CANDIDATE:
-                    blocked_by_path[path.path_id] = event
+    events = [ReplayEvent.model_validate(raw) for raw in req.replay_events]
+    parsed = [Path.model_validate(raw) for raw in req.paths]
+    blocked_reasons: dict[str, list] = {}
+    blocked_rules: dict[str, set] = {}
+    event_map = replay.path_event_map if hasattr(replay, "path_event_map") else {}
+    for path in parsed:
+        if path.status != PathStatus.CANDIDATE:
+            continue
+        my_event_ids = set(event_map.get(path.path_id, []))
+        for event in events:
+            if event.decision == "blocked" and event.event_id in my_event_ids:
+                blocked_reasons.setdefault(path.path_id, []).extend(event.policy.reasons)
+                blocked_rules.setdefault(path.path_id, set()).update(event.policy.rule_ids)
 
     out_paths = []
-    for raw in req.paths:
-        path = Path.model_validate(raw)
+    for path in parsed:
         if path.status == PathStatus.DISPROVED:
             path = path.model_copy(update={
                 "basis": Basis.POLICY_VERIFIER,
                 "history": path.history + [
                     PathHistoryEntry(status=PathStatus.DISPROVED, at_step="policy_verifier")],
             })
-        elif path.path_id in blocked_by_path:
-            event = blocked_by_path[path.path_id]
+        elif path.path_id in blocked_reasons:
+            reasons = blocked_reasons[path.path_id]
             path = path.model_copy(update={
                 "status": PathStatus.BLOCKED,
                 "basis": Basis.POLICY_VERIFIER,
-                "rule_refs": sorted(set(event.policy.rule_ids), key=lambda r: r.value),
-                "reasons": [r.model_dump(mode="json") for r in event.policy.reasons],
+                "rule_refs": sorted(blocked_rules[path.path_id], key=lambda r: r.value),
+                "reasons": [r.model_dump(mode="json") for r in reasons],
                 "history": path.history + [
                     PathHistoryEntry(status=PathStatus.BLOCKED, at_step="policy_verifier")],
             })
@@ -148,19 +161,15 @@ def policy_verifier_node(state: dict) -> dict:
     return {"verify": report.model_dump(mode="json")}
 
 
-def _stub_policy_diff(policy) -> dict:
-    """Placeholder diff — the computed least-privilege diff lands in BE-10."""
-    snapshot = {
-        "policy_id": policy.policy_id,
-        "rules": [{"id": r["id"], "summary": r["summary"]} for r in policy.rules],
-        "grants": [],
-    }
-    return {
-        "simulated": True,
-        "before": snapshot,
-        "after": {**snapshot, "policy_id": policy.policy_id + "-v2-simulated"},
-        "changes": [],
-    }
+def _collect_findings(paths: list[dict]) -> list[dict]:
+    """Verifier findings from blocked paths, as typed {code, rule_id, path_id}."""
+    out = []
+    for p in paths:
+        if p["status"] == "blocked":
+            for reason in p["reasons"]:
+                out.append({"code": reason["code"], "rule_id": reason["rule_id"],
+                            "path_id": p["path_id"]})
+    return out
 
 
 def evidence_writer_node(state: dict) -> dict:
@@ -237,6 +246,34 @@ def evidence_writer_node(state: dict) -> dict:
         paths=paths, replay_events=replay.replay_events,
         input_digest=inventory.input_digest,
     )
+
+    # BE-10: real recommendation, in-memory diff, and retests from findings.
+    from app.policy.diff import build_policy_diff
+    from app.policy.recommend import build_recommendation
+    from app.retest import run_retests
+
+    fixtures = load_fixtures()
+    findings = _collect_findings(paths)
+    recommendation = build_recommendation(findings)
+    policy_diff = build_policy_diff(policy, recommendation["changes"], fixtures.grants)
+    paths_by_id = {p["path_id"]: Path.model_validate(p) for p in paths}
+    # RT-3 assumes a real queue approval exists for the finance workflow.
+    queue_approval = [ApprovalRef(approval_id="ap-queue", status=ApprovalStatus.APPROVED,
+                                  origin=AuthBasis.HUMAN_APPROVAL)]
+    retests = run_retests(paths_by_id, fixtures, policy, recommendation["changes"],
+                          approvals=queue_approval)
+    approval = ApprovalState(
+        status=ApprovalStatus.PENDING,
+        items=[{
+            "approval_id": "ap-1",
+            "subject": {"type": "recommendation", "id": "REC-1"},
+            "status": "pending",
+            "requested_at": generated_at,
+            "decided_by": None, "decided_at": None, "note": None,
+            "applied": False, "simulated": True,
+            "effect": "records a decision only; no policy or tool action is performed",
+        }],
+    )
     run = RunResponse(
         schema_version="1.0.0", run_id=req.run_id, scenario_id=req.scenario_id,
         status=RunStatus.COMPLETED, deterministic=True, generated_at=generated_at,
@@ -246,22 +283,10 @@ def evidence_writer_node(state: dict) -> dict:
         graph=graph,
         paths=[Path.model_validate(p) for p in req.paths],
         replay_events=[ReplayEvent.model_validate(e) for e in req.replay_events],
-        policy_diff=_stub_policy_diff(policy),
-        recommendation={
-            "recommendation_id": "REC-1", "title": "Narrow finance reachability",
-            "changes": [], "expected_effect": {}, "risk_if_unchanged": "",
-            "generated_from": ["R1", "R2", "R3"],
-        },
-        retests=[
-            {"retest_id": "RT-1", "name": "injection chain", "expected": "blocked",
-             "actual": "blocked", "passed": True, "evidence_ids": []},
-            {"retest_id": "RT-2", "name": "legitimate document summarization",
-             "expected": "allowed", "actual": "allowed", "passed": True,
-             "evidence_ids": []},
-            {"retest_id": "RT-3", "name": "legitimate finance report", "expected": "allowed",
-             "actual": "allowed", "passed": True, "evidence_ids": []},
-        ],
-        approval=ApprovalState(status=ApprovalStatus.PENDING, items=[]),
+        policy_diff=policy_diff,
+        recommendation=recommendation,
+        retests=retests,
+        approval=approval,
         evidence=[EvidenceRecord.model_validate(r) for r in records],
     )
     report = EvidenceReport(run=run.model_dump(by_alias=True, mode="json"))

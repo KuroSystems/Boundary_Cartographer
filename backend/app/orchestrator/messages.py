@@ -40,6 +40,7 @@ class ReplayRequest(Msg):
 
 class ReplayReport(Msg):
     replay_events: list[dict]  # contract ReplayEvent payloads
+    path_event_map: dict[str, list[str]] = {}  # path_id -> event_ids (attribution)
 
 
 # ---- Policy Verifier ----

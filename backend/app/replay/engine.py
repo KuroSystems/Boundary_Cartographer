@@ -106,6 +106,7 @@ def replay_path(
     policy: Policy | None = None,
     approvals: list[ApprovalRef] | None = None,
     call_fn=None,
+    drop_inheritance: bool = False,
 ) -> list[ReplayEvent]:
     """Replay one candidate path. Returns replay_events[] (evt:0001.. in order).
 
@@ -151,6 +152,11 @@ def replay_path(
             delegate = hop.to.removeprefix("identity:")
             delegation_chain.append(delegate)
             actor = delegate  # legitimate support->finance handoff (grant matrix)
+            if drop_inheritance:
+                # Simulated policy v2 (C3): a delegated context must re-establish
+                # purpose from a trusted request — inherited purpose is dropped.
+                purpose = Purpose.FINANCE_REPORTING if delegate == "finance_analyst" else purpose
+                purpose_origin = AuthBasis.USER_REQUEST
             seq += 1
             events.append(_event(
                 seq, tool=f"delegation:{hop.from_}->{hop.to}", actor=actor,
