@@ -455,7 +455,7 @@ Both contributors work these together; `S-02` and `S-03` may be split one-each a
   - `CONTRACT.md` invariants section lists all seven invariants from §2.8 verbatim.
   - Both contributors sign off in the file header (`Locked by: BE/FE, <date>`); time-box respected (hard stop at 4h).
 
-#### [ ] S-03 · Author the static fixtures (`demo_scenario.json`, `run.demo.json`)
+#### [x] S-03 · Author the static fixtures (`demo_scenario.json`, `run.demo.json`)
 - **Workstream:** shared (both) · **Priority:** P0 · **Estimate:** 2.5h
 - **Depends on:** `S-02`
 - **Deliverable:** `contract/fixtures/demo_scenario.json` (4 tools, 2 identities, full grant matrix, 3 rules,
