@@ -15,10 +15,29 @@ make frontend            # npm run dev -- --port 5173                 (cwd: fron
 make test-backend        # pytest -q                                  (cwd: backend)
 make test-frontend       # npm test -- --run                          (cwd: frontend)
 make demo                # python -m app.demo --print                 (cwd: backend, offline E2E in terminal)
-make verify              # ruff + pytest + npm run typecheck + lint + test + build
+make verify              # contract + fixture validation, ruff, pytest, typecheck, lint, tests, build
+./scripts/offline_check.sh  # runs test-backend + test-frontend + demo with networking blocked
 ```
 
 The frontend dev server proxies `/api/*` to the backend on `http://localhost:8000`.
+
+## Offline verification harness (task S-04)
+
+`./scripts/offline_check.sh` runs `make test-backend`, `make test-frontend`, and `make demo` with networking
+blocked — inside an empty network namespace via `unshare -n` when available, otherwise with poisoned
+`HTTP(S)_PROXY`/`ALL_PROXY` plus socket guards (`scripts/py_guard/sitecustomize.py` for Python,
+`scripts/node_guard.cjs` for Node) that raise on any outbound socket to a non-loopback host. It prints a
+per-check PASS/FAIL summary, includes a self-test proving the block is active, and exits non-zero on any
+failure — so an attempted outbound socket fails loudly during tests.
+
+## Lane import rules (dependency rules, task S-04)
+
+- **Backend never imports frontend code** and never reads `contract/fixtures/*.json` at runtime
+  (`BE-12` may *compare* against `run.demo.json` in tests only).
+- **Frontend never imports backend code.** The only shared artifacts between lanes are the frozen files
+  under `contract/` (`openapi.yaml`, `schemas/`, `fixtures/`, `CONTRACT.md`, `CHANGELOG.md`).
+- Frontend talks to the backend **only over HTTP** at `/api/v1` (dev proxy), or renders
+  `contract/fixtures/run.demo.json` directly in fixture mode with no backend running.
 
 ## Toolchain and installed versions (verified 2026-11-06)
 
