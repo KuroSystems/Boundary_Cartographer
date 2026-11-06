@@ -538,7 +538,7 @@ Both contributors work these together; `S-02` and `S-03` may be split one-each a
   - `input_digest` is stable across two loads and changes when any fixture byte changes.
   - `GET /api/v1/scenarios/demo` can be assembled from this loader alone (test builds the payload directly).
 
-#### [ ] BE-03 · SQLite schema and append-only repository
+#### [x] BE-03 · SQLite schema and append-only repository
 - **Workstream:** backend · **Priority:** P0 · **Estimate:** 1.5h
 - **Depends on:** `S-01`
 - **Deliverable:** `backend/app/store/db.py` (connection, `PRAGMA journal_mode=WAL`, `foreign_keys=ON`,
