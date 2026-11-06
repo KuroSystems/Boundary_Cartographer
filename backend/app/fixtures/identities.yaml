@@ -1,0 +1,10 @@
+# Identities for scenario demo-v1 (BE-02). Exactly two (scope freeze, tasks.md §1.5).
+identities:
+  - id: document_assistant
+    label: Document assistant
+    allowed_purposes: ["document_summarization"]
+    may_delegate_to: ["finance_analyst"]
+  - id: finance_analyst
+    label: Finance analyst
+    allowed_purposes: ["finance_reporting"]
+    may_delegate_to: []

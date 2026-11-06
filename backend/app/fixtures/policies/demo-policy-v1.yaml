@@ -1,0 +1,47 @@
+# Policy rules as data for demo-policy-v1 (BE-02). Exactly three rules R1-R3.
+# Evaluated by the deterministic local rule engine (ADR-0001); default deny.
+policy_id: demo-policy-v1
+engine: local-rule-engine@1.0.0
+rules:
+  - id: R1
+    name: Untrusted content cannot authorize
+    kind: authorization_basis
+    effect: deny
+    conditions:
+      any_authorization_basis: untrusted_content
+    reason_codes: ["R1_INSTRUCTION_NOT_AUTHORIZATION"]
+    summary: >-
+      Deny any call whose authorization basis includes untrusted_content
+      (purpose, identity/delegation, permission, or approval).
+  - id: R2
+    name: Purpose isolation
+    kind: purpose_isolation
+    effect: deny
+    conditions:
+      workflow_purpose: document_summarization
+      tainted_args: true
+      tools: ["finance.lookup", "finance.export"]
+    reason_codes: ["R2_CROSS_PURPOSE_FLOW"]
+    summary: >-
+      In a document_summarization workflow, deny finance.lookup / finance.export
+      calls whose arguments contain document-derived (tainted) content.
+  - id: R3
+    name: Export preconditions
+    kind: export_preconditions
+    effect: deny
+    conditions:
+      tool: finance.export
+      require:
+        actor: finance_analyst
+        purpose: finance_reporting
+        approval: human_queue
+        taint: no_untrusted
+    reason_codes:
+      - R3_WRONG_IDENTITY
+      - R3_WRONG_PURPOSE
+      - R3_NO_VALID_APPROVAL
+      - R3_TAINTED_ARGS
+    summary: >-
+      Allow finance.export only when actor=finance_analyst AND
+      purpose=finance_reporting AND a human queue approval exists AND arguments
+      are untainted; otherwise deny per missing clause.

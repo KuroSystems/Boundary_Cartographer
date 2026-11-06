@@ -1,0 +1,28 @@
+# Identity/tool grant matrix for demo-v1 (BE-02) — the §2.4 matrix of record.
+# Includes the marked vestigial over-grant (document_assistant -> finance.lookup).
+grants:
+  - identity: document_assistant
+    tool: document.read
+    scopes: ["docs:read_untrusted"]
+    purposes: ["document_summarization"]
+    note: standard document workflow grant
+  - identity: document_assistant
+    tool: document.summarize
+    scopes: ["docs:summarize"]
+    purposes: ["document_summarization"]
+    note: standard document workflow grant
+  - identity: document_assistant
+    tool: finance.lookup
+    scopes: ["finance:lookup_public"]
+    purposes: ["finance_reporting"]
+    note: vestigial over-grant — unused by the legitimate summarization flow
+  - identity: finance_analyst
+    tool: finance.lookup
+    scopes: ["finance:lookup"]
+    purposes: ["finance_reporting"]
+    note: standard finance workflow grant
+  - identity: finance_analyst
+    tool: finance.export
+    scopes: ["finance:export"]
+    purposes: ["finance_reporting"]
+    note: requires human approval + untainted arguments (rule R3)

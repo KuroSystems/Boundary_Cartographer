@@ -523,7 +523,7 @@ Both contributors work these together; `S-02` and `S-03` may be split one-each a
   - Enum values are identical strings to the contract (test asserts the exact sets).
   - `pytest backend/tests/test_contract_models.py` green.
 
-#### [ ] BE-02 · Fixtures loader: manifest, identities, grant matrix, policies, seeded document
+#### [x] BE-02 · Fixtures loader: manifest, identities, grant matrix, policies, seeded document
 - **Workstream:** backend · **Priority:** P0 · **Estimate:** 2h
 - **Depends on:** `S-03`, `BE-01`
 - **Deliverable:** `backend/app/fixtures/manifest.yaml` (4 tools with `required_scopes`, `purposes`, `sensitive`,
