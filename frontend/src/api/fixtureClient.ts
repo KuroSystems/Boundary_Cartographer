@@ -33,6 +33,9 @@ export const fixtureClient: ApiClient = {
     // decision (records-only, see FE-09 note in tasks.md).
     return clone(run);
   },
+  startRun(): Promise<RunResponse> {
+    return this.createRun('demo-v1');
+  },
   async getRun(runId: string): Promise<RunResponse> {
     if (runId !== run.run_id) {
       throw new ApiError(404, 'RUN_NOT_FOUND', 'run not found');

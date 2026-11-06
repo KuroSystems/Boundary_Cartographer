@@ -41,6 +41,11 @@ export const httpClient: ApiClient = {
       method: 'POST',
       body: JSON.stringify({ scenario_id: scenarioId }),
     }),
+  startRun: (scenarioId: string) =>
+    request<RunResponse>('/runs', {
+      method: 'POST',
+      body: JSON.stringify({ scenario_id: scenarioId }),
+    }),
   getRun: (runId: string) => request<RunResponse>(`/runs/${encodeURIComponent(runId)}`),
   decideApproval: (runId: string, req: ApprovalDecisionRequest) =>
     request<ApprovalState>(`/runs/${encodeURIComponent(runId)}/approval`, {

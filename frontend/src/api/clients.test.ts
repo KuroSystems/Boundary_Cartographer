@@ -13,6 +13,7 @@ describe('ApiClient seam (FE-01)', () => {
       expect(typeof c.getHealth).toBe('function');
       expect(typeof c.getScenario).toBe('function');
       expect(typeof c.createRun).toBe('function');
+      expect(typeof c.startRun).toBe('function');
       expect(typeof c.getRun).toBe('function');
       expect(typeof c.decideApproval).toBe('function');
     }

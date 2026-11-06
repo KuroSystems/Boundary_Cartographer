@@ -781,7 +781,7 @@ Both contributors work these together; `S-02` and `S-03` may be split one-each a
   - Types compile with `strict: true`; codegen output is diffed in `make verify` (fails if `openapi.yaml` changed
     without regenerating).
 
-#### [ ] FE-03 · Scenario overview + run control with loading/error/empty states
+#### [x] FE-03 · Scenario overview + run control with loading/error/empty states
 - **Workstream:** frontend · **Priority:** P0 · **Estimate:** 2.5h
 - **Depends on:** `FE-01`, `FE-02`
 - **Deliverable:** `src/views/ScenarioOverview.tsx` (counts: 4 tools, 2 identities, 3 rules; sensitive sink

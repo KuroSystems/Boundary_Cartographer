@@ -14,6 +14,8 @@ export interface ApiClient {
   getHealth(): Promise<HealthResponse>;
   getScenario(): Promise<ScenarioResponse>;
   createRun(scenarioId: string): Promise<RunResponse>;
+  /** Alias used by the run control (FE-03): kick off a run for the demo scenario. */
+  startRun(scenarioId: string): Promise<RunResponse>;
   getRun(runId: string): Promise<RunResponse>;
   decideApproval(runId: string, req: ApprovalDecisionRequest): Promise<ApprovalState>;
 }
