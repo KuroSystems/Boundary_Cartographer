@@ -644,7 +644,7 @@ Both contributors work these together; `S-02` and `S-03` may be split one-each a
   - `pytest backend/tests/test_replay.py` green, including a test where sanitization is disabled and the engine still
     refuses to treat text as authorization (defense in depth).
 
-#### [ ] BE-09 · LangGraph orchestration with five fixed specialist roles
+#### [x] BE-09 · LangGraph orchestration with five fixed specialist roles
 - **Workstream:** backend · **Priority:** P0 · **Estimate:** 2.5h
 - **Depends on:** `BE-05`, `BE-06`, `BE-07`, `BE-08`
 - **Deliverable:** `backend/app/orchestrator/messages.py` (typed `InventoryRequest/Report`,
