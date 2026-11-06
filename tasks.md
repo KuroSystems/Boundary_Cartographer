@@ -553,7 +553,7 @@ Both contributors work these together; `S-02` and `S-03` may be split one-each a
   - `applied` and `simulated` columns default to `0`/`1` and no code path writes `applied = 1` (grep test / test).
   - `pytest backend/tests/test_store.py` green.
 
-#### [ ] BE-04 · Mock MCP tool boundary and the four tools
+#### [x] BE-04 · Mock MCP tool boundary and the four tools
 - **Workstream:** backend · **Priority:** P0 · **Estimate:** 2h
 - **Depends on:** `BE-01`, `S-03`
 - **Deliverable:** `backend/app/tools/protocol.py` (`ToolCallRequest{tool, arguments, actor, purpose, taint}`,
