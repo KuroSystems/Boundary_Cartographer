@@ -1,4 +1,4 @@
-"""S-01 placeholder smoke test: the app serves /api/v1/health."""
+"""Health endpoint serves the frozen contract HealthResponse (BE-11)."""
 
 from fastapi.testclient import TestClient
 
@@ -7,9 +7,12 @@ from app.main import app
 client = TestClient(app)
 
 
-def test_health_placeholder():
+def test_health_contract_shape():
     response = client.get("/api/v1/health")
     assert response.status_code == 200
     body = response.json()
-    assert body["status"] == "ok"
-    assert body["service"] == "boundary-cartographer"
+    assert body == {
+        "status": "ok",
+        "offline": True,
+        "policy_engine": "local-rule-engine@1.0.0",
+    }

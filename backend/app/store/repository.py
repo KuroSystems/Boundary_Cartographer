@@ -53,8 +53,14 @@ def insert_run(conn: sqlite3.Connection, run: dict) -> None:
 
 
 def get_run(conn: sqlite3.Connection, run_id: str) -> dict | None:
+    raw = get_run_raw(conn, run_id)
+    return json.loads(raw) if raw is not None else None
+
+
+def get_run_raw(conn: sqlite3.Connection, run_id: str) -> str | None:
+    """The stored payload string, exactly as persisted (canonical JSON)."""
     row = conn.execute("SELECT payload FROM runs WHERE run_id = ?", (run_id,)).fetchone()
-    return json.loads(row["payload"]) if row else None
+    return row["payload"] if row else None
 
 
 # ---------------------------------------------------------------- evidence

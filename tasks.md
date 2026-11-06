@@ -678,7 +678,7 @@ Both contributors work these together; `S-02` and `S-03` may be split one-each a
     change is load-bearing so the recommendation is honest about overlapping controls.
   - Recommendation text is generated from findings (test asserts no free-text field is required to render it).
 
-#### [ ] BE-11 · FastAPI app, endpoints, persistence wiring, and approval recording
+#### [x] BE-11 · FastAPI app, endpoints, persistence wiring, and approval recording
 - **Workstream:** backend · **Priority:** P0 · **Estimate:** 2.5h
 - **Depends on:** `BE-03`, `BE-10`
 - **Deliverable:** `backend/app/main.py` (app factory, CORS for `http://localhost:5173`, `/api/v1/openapi.json`,
