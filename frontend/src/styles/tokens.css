@@ -183,3 +183,151 @@ table.data th {
   padding: 2rem;
   color: var(--status-blocked);
 }
+
+/* ---- graph view (FE-04) ---- */
+.graph-layout {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.graph-rail {
+  width: 300px;
+  flex-shrink: 0;
+}
+
+.graph-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.graph-canvas {
+  background: var(--bg-inset);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.flow-node {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.35rem 0.6rem;
+  font-size: 0.75rem;
+  max-width: 180px;
+}
+
+.flow-node:focus {
+  outline: 2px solid var(--accent);
+}
+
+.flow-node.highlighted {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.flow-node-kind {
+  display: block;
+  color: var(--text-dim);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.flow-node-risk {
+  display: inline-block;
+  margin-left: 0.4rem;
+  color: var(--status-blocked);
+  font-weight: 700;
+}
+
+.path-rail-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.path-rail-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  background: var(--bg-inset);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.4rem 0.55rem;
+  cursor: pointer;
+  font-size: 0.8rem;
+  text-align: left;
+}
+
+.path-rail-item:hover,
+.path-rail-item:focus-visible {
+  border-color: var(--accent);
+  outline: none;
+}
+
+.path-rail-item.selected {
+  border-color: var(--accent);
+  background: var(--bg-panel);
+}
+
+.path-rail-item .reason-code {
+  margin-left: auto;
+  color: var(--text-dim);
+  font-size: 0.68rem;
+}
+
+.legend-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+}
+
+.legend-line {
+  display: inline-block;
+  width: 2.2rem;
+  border-top: 3px solid;
+  vertical-align: middle;
+  margin: 0 0.4rem;
+}
+
+.legend-line.blocked {
+  border-color: var(--status-blocked);
+}
+
+.legend-line.allowed {
+  border-color: var(--status-allowed);
+}
+
+.legend-line.candidate {
+  border-color: var(--status-candidate);
+  border-top-style: dashed;
+}
+
+.legend-line.disproved {
+  border-color: var(--status-disproved);
+  border-top-style: dotted;
+}
+
+button {
+  background: var(--accent);
+  color: var(--bg);
+  border: none;
+  border-radius: 6px;
+  padding: 0.45rem 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button:hover {
+  filter: brightness(1.1);
+}

@@ -47,7 +47,7 @@ describe('App shell (FE-01 smoke test)', () => {
 
   it('renders the remaining routes', async () => {
     renderApp('/graph');
-    expect(await screen.findByText(/^nodes$/i)).toBeInTheDocument();
+    expect(await screen.findByText(/attack-path graph/i)).toBeInTheDocument();
     renderApp('/policy');
     expect(await screen.findByText(/policy diff/i)).toBeInTheDocument();
     renderApp('/approvals');

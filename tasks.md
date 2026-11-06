@@ -795,7 +795,7 @@ Both contributors work these together; `S-02` and `S-03` may be split one-each a
   - Overview asserts and displays: exactly 4 tools, 2 identities, 3 rules, one seeded untrusted doc, one sensitive sink.
   - Tests cover idle, loading, success, error, empty (5 tests, RTL, no snapshots).
 
-#### [ ] FE-04 · Attack-path graph (React Flow) with status and reason display
+#### [x] FE-04 · Attack-path graph (React Flow) with status and reason display
 - **Workstream:** frontend · **Priority:** P0 · **Estimate:** 4h
 - **Depends on:** `FE-02`, `FE-03`
 - **Deliverable:** `src/views/GraphView.tsx`, `src/components/graph/PathGraph.tsx` (React Flow, custom node types
