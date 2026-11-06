@@ -441,7 +441,7 @@ Both contributors work these together; `S-02` and `S-03` may be split one-each a
   - `make test-backend` runs and reports 1 passing placeholder test.
   - `README.md` documents that runtime is offline after bootstrap, and lists versions actually installed.
 
-#### [ ] S-02 · Lock the API/data contract and publish `openapi.yaml`
+#### [x] S-02 · Lock the API/data contract and publish `openapi.yaml`
 - **Workstream:** shared (both) · **Priority:** P0 · **Estimate:** 2.5h
 - **Depends on:** `S-01`
 - **Deliverable:** `contract/openapi.yaml` (4 endpoints + health + error envelope, all enums, `additionalProperties:

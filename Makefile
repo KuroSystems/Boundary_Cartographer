@@ -25,7 +25,8 @@ test-frontend:  ## npm test -- --run (cwd: frontend)
 demo:  ## python -m app.demo --print (cwd: backend, offline E2E in terminal)
 	cd backend && .venv/bin/python -m app.demo --print
 
-verify:  ## ruff + pytest + typecheck + lint + test + build
+verify:  ## contract validation + ruff + pytest + typecheck + lint + test + build
+	cd backend && .venv/bin/python ../scripts/validate_contract.py
 	cd backend && .venv/bin/ruff check app tests
 	$(MAKE) test-backend
 	cd frontend && npm run typecheck

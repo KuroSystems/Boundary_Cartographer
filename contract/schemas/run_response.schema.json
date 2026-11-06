@@ -1,0 +1,352 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://boundary-cartographer.local/contract/schemas/run_response.schema.json",
+  "title": "RunResponse",
+  "description": "Single source of truth for POST /api/v1/runs (201), GET /api/v1/runs/{run_id} (200). Mirrors the RunResponse component in contract/openapi.yaml (locked by BE/FE, 2026-11-06).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "run_id", "scenario_id", "status", "deterministic", "generated_at", "input_digest", "engine", "summary", "graph", "paths", "replay_events", "policy_diff", "recommendation", "retests", "approval", "evidence"],
+  "properties": {
+    "schema_version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$", "example": "1.0.0" },
+    "run_id": { "type": "string", "example": "01JCV3B7Q4ZK8S6WQ4PZB0H2XK" },
+    "scenario_id": { "type": "string", "example": "demo-v1" },
+    "status": { "$ref": "#/$defs/runStatus" },
+    "deterministic": { "type": "boolean", "example": true },
+    "generated_at": { "$ref": "#/$defs/timestamp" },
+    "input_digest": { "$ref": "#/$defs/sha256Digest" },
+    "engine": { "$ref": "#/$defs/engineInfo" },
+    "summary": { "$ref": "#/$defs/summary" },
+    "graph": { "$ref": "#/$defs/graph" },
+    "paths": { "type": "array", "items": { "$ref": "#/$defs/path" } },
+    "replay_events": { "type": "array", "items": { "$ref": "#/$defs/replayEvent" } },
+    "policy_diff": { "$ref": "#/$defs/policyDiff" },
+    "recommendation": { "$ref": "#/$defs/recommendation" },
+    "retests": { "type": "array", "minItems": 3, "maxItems": 3, "items": { "$ref": "#/$defs/retest" } },
+    "approval": { "$ref": "#/$defs/approvalState" },
+    "evidence": { "type": "array", "items": { "$ref": "#/$defs/evidenceRecord" } }
+  },
+  "$defs": {
+    "runStatus": { "type": "string", "enum": ["completed", "failed"], "example": "completed" },
+    "pathStatus": { "type": "string", "enum": ["candidate", "allowed", "blocked", "disproved"], "example": "blocked" },
+    "basis": { "type": "string", "enum": ["graph_reachability", "policy_verifier"], "example": "policy_verifier" },
+    "replayDecision": { "type": "string", "enum": ["allowed", "blocked", "not_executed"], "example": "blocked" },
+    "policyDecision": { "type": "string", "enum": ["allow", "deny"], "example": "deny" },
+    "trustLevel": { "type": "string", "enum": ["trusted", "untrusted", "derived_untrusted", "mixed"], "example": "derived_untrusted" },
+    "nodeKind": { "type": "string", "enum": ["source", "identity", "tool", "data_scope", "output"], "example": "tool" },
+    "edgeKind": { "type": "string", "enum": ["flows_to", "may_invoke", "reads", "produces", "derived_from", "delegates_to"], "example": "may_invoke" },
+    "evidenceKind": { "type": "string", "enum": ["source", "manifest", "grant", "policy_rule", "event"], "example": "source" },
+    "purpose": { "type": "string", "enum": ["document_summarization", "finance_reporting"], "example": "document_summarization" },
+    "ruleId": { "type": "string", "enum": ["R1", "R2", "R3"], "example": "R2" },
+    "approvalStatus": { "type": "string", "enum": ["pending", "approved", "rejected"], "example": "pending" },
+    "changeOp": { "type": "string", "enum": ["revoke_grant", "add_guard", "drop_inheritance", "modify"], "example": "revoke_grant" },
+    "nodeRisk": { "type": "string", "enum": ["low", "medium", "high", "critical"], "example": "critical" },
+    "sha256Digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$", "example": "sha256:9f2c1a7b4d6e8f0a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718" },
+    "timestamp": { "type": "string", "format": "date-time", "example": "2026-11-06T10:00:00Z" },
+    "engineInfo": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["policy_engine", "orchestrator"],
+      "properties": {
+        "policy_engine": { "type": "string", "example": "local-rule-engine@1.0.0" },
+        "orchestrator": { "type": "string", "example": "langgraph@1.2.20" }
+      }
+    },
+    "summaryCounts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["nodes", "edges", "candidate_paths", "allowed_paths", "blocked_paths", "disproved_paths"],
+      "properties": {
+        "nodes": { "type": "integer", "minimum": 0, "example": 14 },
+        "edges": { "type": "integer", "minimum": 0, "example": 21 },
+        "candidate_paths": { "type": "integer", "minimum": 0, "example": 2 },
+        "allowed_paths": { "type": "integer", "minimum": 0, "example": 2 },
+        "blocked_paths": { "type": "integer", "minimum": 0, "example": 2 },
+        "disproved_paths": { "type": "integer", "minimum": 0, "example": 1 }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["headline", "counts", "sensitive_sinks", "tools_tested", "identities", "rules"],
+      "properties": {
+        "headline": { "type": "string", "example": "Compositional path from untrusted document to finance.export found and blocked" },
+        "counts": { "$ref": "#/$defs/summaryCounts" },
+        "sensitive_sinks": { "type": "array", "items": { "type": "string" }, "example": ["tool:finance.export"] },
+        "tools_tested": { "type": "integer", "example": 4 },
+        "identities": { "type": "integer", "example": 2 },
+        "rules": { "type": "integer", "example": 3 }
+      }
+    },
+    "graphNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "label", "source_ids"],
+      "properties": {
+        "id": { "type": "string", "example": "tool:finance.export" },
+        "kind": { "$ref": "#/$defs/nodeKind" },
+        "label": { "type": "string", "example": "finance.export" },
+        "risk": { "$ref": "#/$defs/nodeRisk" },
+        "scopes": { "type": "array", "items": { "type": "string" }, "example": ["finance:export"] },
+        "source_ids": { "type": "array", "items": { "type": "string" }, "example": ["src:manifest"] }
+      }
+    },
+    "graphEdge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "from", "to", "kind", "source_ids"],
+      "properties": {
+        "id": { "type": "string", "example": "edge:05" },
+        "from": { "type": "string", "example": "identity:document_assistant" },
+        "to": { "type": "string", "example": "tool:finance.lookup" },
+        "kind": { "$ref": "#/$defs/edgeKind" },
+        "purposes": { "type": "array", "items": { "$ref": "#/$defs/purpose" }, "example": ["finance_reporting"] },
+        "scopes": { "type": "array", "items": { "type": "string" }, "example": ["finance:lookup_public"] },
+        "trust": { "$ref": "#/$defs/trustLevel" },
+        "source_ids": { "type": "array", "items": { "type": "string" }, "example": ["src:grant-matrix"] }
+      }
+    },
+    "graph": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["nodes", "edges"],
+      "properties": {
+        "nodes": { "type": "array", "items": { "$ref": "#/$defs/graphNode" } },
+        "edges": { "type": "array", "items": { "$ref": "#/$defs/graphEdge" } }
+      }
+    },
+    "pathHop": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["step", "from", "to", "kind", "actor", "purpose"],
+      "properties": {
+        "step": { "type": "integer", "minimum": 1, "example": 1 },
+        "from": { "type": "string", "example": "source:doc-untrusted-001" },
+        "to": { "type": "string", "example": "tool:document.read" },
+        "kind": { "$ref": "#/$defs/edgeKind" },
+        "actor": { "type": "string", "example": "document_assistant" },
+        "purpose": { "$ref": "#/$defs/purpose" }
+      }
+    },
+    "pathReason": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "rule_id", "message", "evidence_ids"],
+      "properties": {
+        "code": { "type": "string", "example": "R2_CROSS_PURPOSE_FLOW" },
+        "rule_id": { "$ref": "#/$defs/ruleId" },
+        "message": { "type": "string", "example": "document_summarization workflow sent document-derived content to finance.export" },
+        "evidence_ids": { "type": "array", "items": { "type": "string" }, "example": ["evt:0004", "src:policy-rule-2"] }
+      }
+    },
+    "pathHistoryEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "at_step"],
+      "properties": {
+        "status": { "$ref": "#/$defs/pathStatus" },
+        "at_step": { "type": "string", "example": "path_finder" }
+      }
+    },
+    "path": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path_id", "status", "basis", "origin", "sink", "hops", "rule_refs", "reasons", "history"],
+      "properties": {
+        "path_id": { "type": "string", "example": "P1" },
+        "status": { "$ref": "#/$defs/pathStatus" },
+        "basis": { "$ref": "#/$defs/basis" },
+        "origin": { "type": "string", "example": "source:doc-untrusted-001" },
+        "sink": { "type": "string", "example": "tool:finance.export" },
+        "stated_purpose": { "$ref": "#/$defs/purpose" },
+        "tainted": { "type": "boolean", "example": true },
+        "hops": { "type": "array", "items": { "$ref": "#/$defs/pathHop" } },
+        "rule_refs": { "type": "array", "items": { "$ref": "#/$defs/ruleId" }, "example": ["R1", "R2", "R3"] },
+        "reasons": { "type": "array", "items": { "$ref": "#/$defs/pathReason" } },
+        "history": { "type": "array", "items": { "$ref": "#/$defs/pathHistoryEntry" } }
+      }
+    },
+    "replayPolicyVerdict": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["decision", "rule_ids", "reasons"],
+      "properties": {
+        "decision": { "$ref": "#/$defs/policyDecision" },
+        "rule_ids": { "type": "array", "items": { "$ref": "#/$defs/ruleId" }, "example": ["R2", "R3"] },
+        "reasons": { "type": "array", "items": { "$ref": "#/$defs/pathReason" } }
+      }
+    },
+    "replayEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["event_id", "seq", "actor", "tool", "decision", "executed", "trust_level", "purpose", "taint_labels", "source_ids", "input_digest", "input_preview", "policy", "tool_result"],
+      "properties": {
+        "event_id": { "type": "string", "example": "evt:0004" },
+        "seq": { "type": "integer", "minimum": 1, "example": 4 },
+        "actor": { "type": "string", "example": "document_assistant" },
+        "tool": { "type": "string", "example": "finance.export" },
+        "decision": { "$ref": "#/$defs/replayDecision" },
+        "executed": { "type": "boolean", "example": false },
+        "trust_level": { "$ref": "#/$defs/trustLevel" },
+        "purpose": { "$ref": "#/$defs/purpose" },
+        "taint_labels": { "type": "array", "items": { "type": "string" }, "example": ["untrusted_document"] },
+        "source_ids": { "type": "array", "items": { "type": "string" }, "example": ["src:doc-untrusted-001", "src:grant-matrix", "src:policy-rule-3"] },
+        "input_digest": { "$ref": "#/$defs/sha256Digest" },
+        "input_preview": { "type": "string", "example": "scope=<redacted> purpose=<claimed>" },
+        "policy": { "$ref": "#/$defs/replayPolicyVerdict" },
+        "tool_result": { "type": ["object", "array", "string", "number", "boolean", "null"], "example": null }
+      }
+    },
+    "policyRuleRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "summary"],
+      "properties": {
+        "id": { "$ref": "#/$defs/ruleId" },
+        "summary": { "type": "string", "example": "Export preconditions" }
+      }
+    },
+    "grantRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["identity", "tool", "scopes"],
+      "properties": {
+        "identity": { "type": "string", "example": "document_assistant" },
+        "tool": { "type": "string", "example": "finance.lookup" },
+        "scopes": { "type": "array", "items": { "type": "string" }, "example": ["finance:lookup_public"] }
+      }
+    },
+    "policySnapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["policy_id", "rules", "grants"],
+      "properties": {
+        "policy_id": { "type": "string", "example": "demo-policy-v1" },
+        "rules": { "type": "array", "items": { "$ref": "#/$defs/policyRuleRef" } },
+        "grants": { "type": "array", "items": { "$ref": "#/$defs/grantRef" } }
+      }
+    },
+    "policyDiffChange": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["op", "target", "rule_id", "summary"],
+      "properties": {
+        "op": { "$ref": "#/$defs/changeOp" },
+        "target": { "type": "string", "example": "grant:document_assistant/finance.lookup" },
+        "rule_id": { "$ref": "#/$defs/ruleId" },
+        "summary": { "type": "string", "example": "revoke vestigial over-grant" }
+      }
+    },
+    "policyDiff": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["simulated", "before", "after", "changes"],
+      "properties": {
+        "simulated": { "type": "boolean", "example": true },
+        "before": { "$ref": "#/$defs/policySnapshot" },
+        "after": { "$ref": "#/$defs/policySnapshot" },
+        "changes": { "type": "array", "items": { "$ref": "#/$defs/policyDiffChange" } }
+      }
+    },
+    "recommendationChange": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["change_id", "op", "target", "rule_refs"],
+      "properties": {
+        "change_id": { "type": "string", "example": "C1" },
+        "op": { "$ref": "#/$defs/changeOp" },
+        "target": { "type": "string", "example": "document_assistant:finance.lookup" },
+        "rule_refs": { "type": "array", "items": { "$ref": "#/$defs/ruleId" }, "example": ["R2"] }
+      }
+    },
+    "recommendation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["recommendation_id", "title", "changes", "expected_effect", "risk_if_unchanged", "generated_from"],
+      "properties": {
+        "recommendation_id": { "type": "string", "example": "REC-1" },
+        "title": { "type": "string", "example": "Narrow finance reachability from document workflows" },
+        "changes": { "type": "array", "items": { "$ref": "#/$defs/recommendationChange" } },
+        "expected_effect": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/pathStatus" },
+          "example": { "P1": "blocked", "P2": "blocked", "P3": "allowed", "P5": "allowed" }
+        },
+        "risk_if_unchanged": { "type": "string", "example": "untrusted document content can reach finance scopes via delegation" },
+        "generated_from": { "type": "array", "items": { "$ref": "#/$defs/ruleId" }, "example": ["R1", "R2", "R3"] }
+      }
+    },
+    "retest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["retest_id", "name", "expected", "actual", "passed", "evidence_ids"],
+      "properties": {
+        "retest_id": { "type": "string", "enum": ["RT-1", "RT-2", "RT-3"], "example": "RT-2" },
+        "name": { "type": "string", "example": "legitimate document summarization" },
+        "expected": { "$ref": "#/$defs/pathStatus" },
+        "actual": { "$ref": "#/$defs/pathStatus" },
+        "passed": { "type": "boolean", "example": true },
+        "evidence_ids": { "type": "array", "items": { "type": "string" }, "example": ["evt:rt2-03"] }
+      }
+    },
+    "approvalSubject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "id"],
+      "properties": {
+        "type": { "type": "string", "enum": ["recommendation", "policy_change"], "example": "recommendation" },
+        "id": { "type": "string", "example": "REC-1" }
+      }
+    },
+    "approvalItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["approval_id", "subject", "status", "requested_at", "decided_by", "decided_at", "note", "applied", "simulated", "effect"],
+      "properties": {
+        "approval_id": { "type": "string", "example": "ap-1" },
+        "subject": { "$ref": "#/$defs/approvalSubject" },
+        "status": { "$ref": "#/$defs/approvalStatus" },
+        "requested_at": { "$ref": "#/$defs/timestamp" },
+        "decided_by": { "type": ["string", "null"], "example": null },
+        "decided_at": { "type": ["string", "null"], "format": "date-time", "example": null },
+        "note": { "type": ["string", "null"], "example": null },
+        "applied": { "type": "boolean", "example": false },
+        "simulated": { "type": "boolean", "example": true },
+        "effect": { "type": "string", "example": "records a decision only; no policy or tool action is performed" }
+      }
+    },
+    "approvalState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "items"],
+      "properties": {
+        "status": { "$ref": "#/$defs/approvalStatus" },
+        "items": { "type": "array", "items": { "$ref": "#/$defs/approvalItem" } }
+      }
+    },
+    "evidenceTrace": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path_ids", "event_ids"],
+      "properties": {
+        "path_ids": { "type": "array", "items": { "type": "string" }, "example": ["P1", "P2"] },
+        "event_ids": { "type": "array", "items": { "type": "string" }, "example": ["evt:0001"] }
+      }
+    },
+    "evidenceRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["evidence_id", "kind", "run_id", "captured_at", "source_id", "summary", "hash", "prev_hash", "trace"],
+      "properties": {
+        "evidence_id": { "type": "string", "example": "src:doc-untrusted-001" },
+        "kind": { "$ref": "#/$defs/evidenceKind" },
+        "run_id": { "type": "string", "example": "01JCV3B7Q4ZK8S6WQ4PZB0H2XK" },
+        "captured_at": { "$ref": "#/$defs/timestamp" },
+        "source_id": { "type": "string", "example": "src:doc-untrusted-001" },
+        "summary": { "type": "string", "example": "seeded untrusted vendor note containing an injection fixture" },
+        "hash": { "$ref": "#/$defs/sha256Digest" },
+        "prev_hash": { "type": ["string", "null"], "example": null },
+        "trace": { "$ref": "#/$defs/evidenceTrace" }
+      }
+    }
+  }
+}

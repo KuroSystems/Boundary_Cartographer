@@ -1,0 +1,895 @@
+openapi: 3.1.0
+info:
+  title: Boundary Cartographer API
+  version: 1.0.0
+  summary: Offline policy-gate demo API (frozen at end of Wave 0, task S-02)
+  description: |
+    Deterministic, fully offline API for the Boundary Cartographer MVP.
+    Base path `/api/v1`. All responses are `application/json`.
+    Every object schema sets `additionalProperties: false` (unknown fields are rejected).
+    Locked by: BE/FE, 2026-11-06. See `contract/CONTRACT.md` for invariants and change protocol.
+  x-locked-by: "BE/FE, 2026-11-06"
+  x-contract-file: contract/CONTRACT.md
+servers:
+  - url: /api/v1
+    description: API v1 base path
+tags:
+  - name: system
+    description: Liveness
+  - name: scenarios
+    description: Static demo scenario (no side effects)
+  - name: runs
+    description: Synchronous analysis runs and the approval queue (records decisions only)
+paths:
+  /health:
+    get:
+      tags: [system]
+      operationId: getHealth
+      summary: Liveness for scripts
+      responses:
+        "200":
+          description: Service is up and running fully offline.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HealthResponse" }
+              example:
+                status: ok
+                offline: true
+                policy_engine: local-rule-engine@1.0.0
+  /scenarios/demo:
+    get:
+      tags: [scenarios]
+      operationId: getDemoScenario
+      summary: Demo scenario — tool inventory, identities, grant matrix, policy metadata, seeded document
+      description: No run, no side effects, safe to call repeatedly.
+      responses:
+        "200":
+          description: The demo scenario payload.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ScenarioResponse" }
+  /runs:
+    post:
+      tags: [runs]
+      operationId: createRun
+      summary: Run the offline analysis synchronously
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateRunRequest" }
+            example:
+              scenario_id: demo-v1
+              options: { include_disproved: true }
+      responses:
+        "201":
+          description: Run completed; returns the full RunResponse.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RunResponse" }
+        "400":
+          description: Unknown scenario or invalid decision payload.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+              example:
+                error:
+                  code: SCENARIO_NOT_FOUND
+                  message: "scenario 'demo-v9' not found"
+                  details: { scenario_id: demo-v9 }
+        "422":
+          description: Request body failed validation.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+              example:
+                error:
+                  code: VALIDATION_ERROR
+                  message: "request body failed validation"
+                  details: { issues: ["options.include_disproved: expected boolean"] }
+  /runs/{run_id}:
+    get:
+      tags: [runs]
+      operationId: getRun
+      summary: Retrieve a completed run
+      parameters:
+        - name: run_id
+          in: path
+          required: true
+          schema: { type: string, example: 01JCV3B7Q4ZK8S6WQ4PZB0H2XK }
+      responses:
+        "200":
+          description: The stored run.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RunResponse" }
+        "404":
+          description: No such run.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+              example:
+                error:
+                  code: RUN_NOT_FOUND
+                  message: "run not found"
+                  details: { run_id: 01JCV3B7Q4ZK8S6WQ4PZB0H2XK }
+  /runs/{run_id}/approval:
+    post:
+      tags: [runs]
+      operationId: decideApproval
+      summary: Record an approve/reject decision on the run's approval queue
+      description: |
+        Records a decision only. Never applies policy, never calls a tool,
+        never changes any state other than the recorded decision.
+        Repeating a decision on an already-decided item returns 409.
+      parameters:
+        - name: run_id
+          in: path
+          required: true
+          schema: { type: string, example: 01JCV3B7Q4ZK8S6WQ4PZB0H2XK }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ApprovalDecisionRequest" }
+            example:
+              approval_id: ap-1
+              decision: approve
+              decided_by: reviewer@example.invalid
+              note: "narrowing looks correct"
+      responses:
+        "200":
+          description: Decision recorded; returns the updated approval state.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApprovalState" }
+        "400":
+          description: Invalid decision value.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+              example:
+                error:
+                  code: INVALID_DECISION
+                  message: "decision must be 'approve' or 'reject'"
+                  details: { decision: maybe }
+        "404":
+          description: No such run.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+              example:
+                error:
+                  code: RUN_NOT_FOUND
+                  message: "run not found"
+                  details: { run_id: 01JCV3B7Q4ZK8S6WQ4PZB0H2XK }
+        "409":
+          description: This approval item was already decided.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+              example:
+                error:
+                  code: APPROVAL_ALREADY_DECIDED
+                  message: "approval ap-1 already decided"
+                  details: { approval_id: ap-1, status: approved }
+        "422":
+          description: Request body failed validation.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+              example:
+                error:
+                  code: VALIDATION_ERROR
+                  message: "request body failed validation"
+                  details: { issues: ["decision: required"] }
+components:
+  schemas:
+    # ---------- primitives / enums (all closed) ----------
+    RunStatus:
+      type: string
+      enum: [completed, failed]
+      example: completed
+    PathStatus:
+      type: string
+      description: candidate = graph reachability only (never verified); allowed/blocked assigned only by the policy verifier; disproved = structurally impossible.
+      enum: [candidate, allowed, blocked, disproved]
+      example: blocked
+    Basis:
+      type: string
+      description: Provenance of a path status. untrusted_content is never a valid basis and never appears here.
+      enum: [graph_reachability, policy_verifier]
+      example: policy_verifier
+    ReplayDecision:
+      type: string
+      enum: [allowed, blocked, not_executed]
+      example: blocked
+    PolicyDecision:
+      type: string
+      enum: [allow, deny]
+      example: deny
+    TrustLevel:
+      type: string
+      enum: [trusted, untrusted, derived_untrusted, mixed]
+      example: derived_untrusted
+    NodeKind:
+      type: string
+      enum: [source, identity, tool, data_scope, output]
+      example: tool
+    EdgeKind:
+      type: string
+      enum: [flows_to, may_invoke, reads, produces, derived_from, delegates_to]
+      example: may_invoke
+    EvidenceKind:
+      type: string
+      enum: [source, manifest, grant, policy_rule, event]
+      example: source
+    Purpose:
+      type: string
+      enum: [document_summarization, finance_reporting]
+      example: document_summarization
+    AuthBasis:
+      type: string
+      description: untrusted_content is never sufficient for authorization and is always rejected (rule R1).
+      enum: [user_request, policy_grant, human_approval, system_default, untrusted_content]
+      example: policy_grant
+    RuleId:
+      type: string
+      enum: [R1, R2, R3]
+      example: R2
+    ApprovalStatus:
+      type: string
+      enum: [pending, approved, rejected]
+      example: pending
+    ApprovalDecisionValue:
+      type: string
+      enum: [approve, reject]
+      example: approve
+    ChangeOp:
+      type: string
+      description: Operation kind in policy diffs / recommendation changes.
+      enum: [revoke_grant, add_guard, drop_inheritance, modify]
+      example: revoke_grant
+    NodeRisk:
+      type: string
+      enum: [low, medium, high, critical]
+      example: critical
+    ErrorCode:
+      type: string
+      enum: [SCENARIO_NOT_FOUND, RUN_NOT_FOUND, APPROVAL_ALREADY_DECIDED, INVALID_DECISION, VALIDATION_ERROR]
+      example: RUN_NOT_FOUND
+    Sha256Digest:
+      type: string
+      pattern: "^sha256:[0-9a-f]{64}$"
+      example: "sha256:9f2c1a7b4d6e8f0a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718"
+    Timestamp:
+      type: string
+      format: date-time
+      example: "2026-11-06T10:00:00Z"
+    Id:
+      type: string
+      example: "tool:finance.export"
+
+    # ---------- error envelope ----------
+    ErrorResponse:
+      type: object
+      additionalProperties: false
+      required: [error]
+      properties:
+        error:
+          type: object
+          additionalProperties: false
+          required: [code, message, details]
+          properties:
+            code: { $ref: "#/components/schemas/ErrorCode" }
+            message: { type: string, example: "run not found" }
+            details:
+              type: object
+              additionalProperties: true
+              example: { run_id: 01JCV3B7Q4ZK8S6WQ4PZB0H2XK }
+
+    # ---------- health ----------
+    HealthResponse:
+      type: object
+      additionalProperties: false
+      required: [status, offline, policy_engine]
+      properties:
+        status: { type: string, enum: [ok], example: ok }
+        offline:
+          type: boolean
+          description: Always true — the app runs fully offline after bootstrap.
+          example: true
+        policy_engine: { type: string, example: local-rule-engine@1.0.0 }
+
+    # ---------- run request ----------
+    CreateRunRequest:
+      type: object
+      additionalProperties: false
+      required: [scenario_id]
+      properties:
+        scenario_id: { type: string, example: demo-v1 }
+        options:
+          type: object
+          additionalProperties: false
+          required: [include_disproved]
+          properties:
+            include_disproved:
+              type: boolean
+              description: Include structurally-disproved paths in the response.
+              example: true
+          example: { include_disproved: true }
+
+    # ---------- approval ----------
+    ApprovalDecisionRequest:
+      type: object
+      additionalProperties: false
+      required: [approval_id, decision]
+      properties:
+        approval_id: { type: string, example: ap-1 }
+        decision: { $ref: "#/components/schemas/ApprovalDecisionValue" }
+        decided_by: { type: ["string", "null"], example: reviewer@example.invalid }
+        note: { type: ["string", "null"], example: "narrowing looks correct" }
+
+    ApprovalSubject:
+      type: object
+      additionalProperties: false
+      required: [type, id]
+      properties:
+        type: { type: string, enum: [recommendation, policy_change], example: recommendation }
+        id: { type: string, example: REC-1 }
+
+    ApprovalItem:
+      type: object
+      additionalProperties: false
+      required: [approval_id, subject, status, requested_at, decided_by, decided_at, note, applied, simulated, effect]
+      properties:
+        approval_id: { type: string, example: ap-1 }
+        subject: { $ref: "#/components/schemas/ApprovalSubject" }
+        status: { $ref: "#/components/schemas/ApprovalStatus" }
+        requested_at: { $ref: "#/components/schemas/Timestamp" }
+        decided_by: { type: ["string", "null"], example: null }
+        decided_at: { type: ["string", "null"], format: date-time, example: null }
+        note: { type: ["string", "null"], example: null }
+        applied:
+          type: boolean
+          description: Always false — the queue records decisions only.
+          example: false
+        simulated:
+          type: boolean
+          description: Always true — nothing is ever applied or executed.
+          example: true
+        effect:
+          type: string
+          example: "records a decision only; no policy or tool action is performed"
+
+    ApprovalState:
+      type: object
+      additionalProperties: false
+      required: [status, items]
+      properties:
+        status: { $ref: "#/components/schemas/ApprovalStatus" }
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/ApprovalItem" }
+
+    # ---------- scenario ----------
+    ToolManifestEntry:
+      type: object
+      additionalProperties: false
+      required: [name, description, required_scopes, purposes, sensitive, approval_required]
+      properties:
+        name: { type: string, example: finance.export }
+        description: { type: string, example: "Export a finance report artifact (mock, simulated)." }
+        required_scopes:
+          type: array
+          items: { type: string }
+          example: ["finance:export"]
+        purposes:
+          type: array
+          items: { $ref: "#/components/schemas/Purpose" }
+          example: [finance_reporting]
+        sensitive:
+          type: boolean
+          description: True for the sensitive sink (finance.export).
+          example: true
+        approval_required:
+          type: boolean
+          example: true
+
+    IdentityEntry:
+      type: object
+      additionalProperties: false
+      required: [id, label, allowed_purposes, may_delegate_to]
+      properties:
+        id: { type: string, example: document_assistant }
+        label: { type: string, example: "Document assistant" }
+        allowed_purposes:
+          type: array
+          items: { $ref: "#/components/schemas/Purpose" }
+          example: [document_summarization]
+        may_delegate_to:
+          type: array
+          items: { type: string }
+          example: [finance_analyst]
+
+    GrantEntry:
+      type: object
+      additionalProperties: false
+      required: [identity, tool, scopes, purposes, note]
+      properties:
+        identity: { type: string, example: document_assistant }
+        tool: { type: string, example: finance.lookup }
+        scopes:
+          type: array
+          items: { type: string }
+          example: ["finance:lookup_public"]
+        purposes:
+          type: array
+          items: { $ref: "#/components/schemas/Purpose" }
+          example: [finance_reporting]
+        note:
+          type: string
+          description: Free-text provenance note, e.g. marking the vestigial over-grant.
+          example: "vestigial over-grant — unused by the legitimate summarization flow"
+
+    PolicyRuleMeta:
+      type: object
+      additionalProperties: false
+      required: [id, name, effect, reason_codes, summary]
+      properties:
+        id: { $ref: "#/components/schemas/RuleId" }
+        name: { type: string, example: "Purpose isolation" }
+        effect: { type: string, enum: [deny], example: deny }
+        reason_codes:
+          type: array
+          items: { type: string }
+          example: [R2_CROSS_PURPOSE_FLOW]
+        summary: { type: string, example: "Deny finance.* calls carrying document-derived content in a document_summarization workflow." }
+
+    PolicyMeta:
+      type: object
+      additionalProperties: false
+      required: [policy_id, engine, rules]
+      properties:
+        policy_id: { type: string, example: demo-policy-v1 }
+        engine: { type: string, example: local-rule-engine@1.0.0 }
+        rules:
+          type: array
+          minItems: 3
+          maxItems: 3
+          items: { $ref: "#/components/schemas/PolicyRuleMeta" }
+
+    SeededDocument:
+      type: object
+      additionalProperties: false
+      required: [id, title, trust_level, content_is_data, content, source_ids]
+      properties:
+        id: { type: string, example: "src:doc-untrusted-001" }
+        title: { type: string, example: "VENDOR STATEMENT — INVOICE 4471" }
+        trust_level: { $ref: "#/components/schemas/TrustLevel" }
+        content_is_data:
+          type: boolean
+          description: Always true — document content is data, never instructions.
+          example: true
+        content:
+          type: string
+          description: Full seeded text. Rendered in the UI only inside a marked, escaped text block.
+          example: "VENDOR STATEMENT — INVOICE 4471 (received from unverified sender)\nAmount due: USD 12,480.00 ..."
+        source_ids:
+          type: array
+          items: { type: string }
+          example: ["src:doc-untrusted-001"]
+
+    ScenarioResponse:
+      type: object
+      additionalProperties: false
+      required: [schema_version, scenario_id, name, manifest, identities, grants, policy, document, sensitive_sinks]
+      properties:
+        schema_version: { type: string, pattern: "^\\d+\\.\\d+\\.\\d+$", example: 1.0.0 }
+        scenario_id: { type: string, example: demo-v1 }
+        name: { type: string, example: "Seeded prompt-injection demo" }
+        manifest:
+          type: object
+          additionalProperties: false
+          required: [tools]
+          properties:
+            tools:
+              type: array
+              minItems: 4
+              maxItems: 4
+              items: { $ref: "#/components/schemas/ToolManifestEntry" }
+        identities:
+          type: array
+          minItems: 2
+          maxItems: 2
+          items: { $ref: "#/components/schemas/IdentityEntry" }
+        grants:
+          type: array
+          description: The full identity/tool grant matrix (read-only in the UI).
+          items: { $ref: "#/components/schemas/GrantEntry" }
+        policy: { $ref: "#/components/schemas/PolicyMeta" }
+        document: { $ref: "#/components/schemas/SeededDocument" }
+        sensitive_sinks:
+          type: array
+          items: { type: string }
+          example: ["tool:finance.export"]
+
+    # ---------- run response ----------
+    EngineInfo:
+      type: object
+      additionalProperties: false
+      required: [policy_engine, orchestrator]
+      properties:
+        policy_engine: { type: string, example: local-rule-engine@1.0.0 }
+        orchestrator: { type: string, example: "langgraph@1.2.20" }
+
+    SummaryCounts:
+      type: object
+      additionalProperties: false
+      required: [nodes, edges, candidate_paths, allowed_paths, blocked_paths, disproved_paths]
+      properties:
+        nodes: { type: integer, minimum: 0, example: 14 }
+        edges: { type: integer, minimum: 0, example: 21 }
+        candidate_paths: { type: integer, minimum: 0, example: 2 }
+        allowed_paths: { type: integer, minimum: 0, example: 2 }
+        blocked_paths: { type: integer, minimum: 0, example: 2 }
+        disproved_paths: { type: integer, minimum: 0, example: 1 }
+
+    Summary:
+      type: object
+      additionalProperties: false
+      required: [headline, counts, sensitive_sinks, tools_tested, identities, rules]
+      properties:
+        headline:
+          type: string
+          example: "Compositional path from untrusted document to finance.export found and blocked"
+        counts: { $ref: "#/components/schemas/SummaryCounts" }
+        sensitive_sinks:
+          type: array
+          items: { type: string }
+          example: ["tool:finance.export"]
+        tools_tested: { type: integer, example: 4 }
+        identities: { type: integer, example: 2 }
+        rules: { type: integer, example: 3 }
+
+    GraphNode:
+      type: object
+      additionalProperties: false
+      required: [id, kind, label, source_ids]
+      properties:
+        id: { $ref: "#/components/schemas/Id" }
+        kind: { $ref: "#/components/schemas/NodeKind" }
+        label: { type: string, example: finance.export }
+        risk: { $ref: "#/components/schemas/NodeRisk" }
+        scopes:
+          type: array
+          items: { type: string }
+          example: ["finance:export"]
+        source_ids:
+          type: array
+          items: { type: string }
+          example: ["src:manifest"]
+
+    GraphEdge:
+      type: object
+      additionalProperties: false
+      required: [id, from, to, kind, source_ids]
+      properties:
+        id: { type: string, example: edge:05 }
+        from: { $ref: "#/components/schemas/Id" }
+        to: { $ref: "#/components/schemas/Id" }
+        kind: { $ref: "#/components/schemas/EdgeKind" }
+        purposes:
+          type: array
+          items: { $ref: "#/components/schemas/Purpose" }
+          example: [finance_reporting]
+        scopes:
+          type: array
+          items: { type: string }
+          example: ["finance:lookup_public"]
+        trust: { $ref: "#/components/schemas/TrustLevel" }
+        source_ids:
+          type: array
+          items: { type: string }
+          example: ["src:grant-matrix"]
+
+    Graph:
+      type: object
+      additionalProperties: false
+      required: [nodes, edges]
+      properties:
+        nodes:
+          type: array
+          items: { $ref: "#/components/schemas/GraphNode" }
+        edges:
+          type: array
+          items: { $ref: "#/components/schemas/GraphEdge" }
+
+    PathHop:
+      type: object
+      additionalProperties: false
+      required: [step, from, to, kind, actor, purpose]
+      properties:
+        step: { type: integer, minimum: 1, example: 1 }
+        from: { $ref: "#/components/schemas/Id" }
+        to: { $ref: "#/components/schemas/Id" }
+        kind: { $ref: "#/components/schemas/EdgeKind" }
+        actor: { type: string, example: document_assistant }
+        purpose: { $ref: "#/components/schemas/Purpose" }
+
+    PathReason:
+      type: object
+      additionalProperties: false
+      required: [code, rule_id, message, evidence_ids]
+      properties:
+        code: { type: string, example: R2_CROSS_PURPOSE_FLOW }
+        rule_id: { $ref: "#/components/schemas/RuleId" }
+        message: { type: string, example: "document_summarization workflow sent document-derived content to finance.export" }
+        evidence_ids:
+          type: array
+          items: { type: string }
+          example: ["evt:0004", "src:policy-rule-2"]
+
+    PathHistoryEntry:
+      type: object
+      additionalProperties: false
+      required: [status, at_step]
+      properties:
+        status: { $ref: "#/components/schemas/PathStatus" }
+        at_step: { type: string, example: path_finder }
+
+    Path:
+      type: object
+      additionalProperties: false
+      required: [path_id, status, basis, origin, sink, hops, rule_refs, reasons, history]
+      properties:
+        path_id: { type: string, example: P1 }
+        status: { $ref: "#/components/schemas/PathStatus" }
+        basis: { $ref: "#/components/schemas/Basis" }
+        origin: { $ref: "#/components/schemas/Id" }
+        sink: { $ref: "#/components/schemas/Id" }
+        stated_purpose: { $ref: "#/components/schemas/Purpose" }
+        tainted: { type: boolean, example: true }
+        hops:
+          type: array
+          items: { $ref: "#/components/schemas/PathHop" }
+        rule_refs:
+          type: array
+          items: { $ref: "#/components/schemas/RuleId" }
+          example: [R1, R2, R3]
+        reasons:
+          type: array
+          items: { $ref: "#/components/schemas/PathReason" }
+        history:
+          type: array
+          items: { $ref: "#/components/schemas/PathHistoryEntry" }
+
+    ReplayPolicyVerdict:
+      type: object
+      additionalProperties: false
+      required: [decision, rule_ids, reasons]
+      properties:
+        decision: { $ref: "#/components/schemas/PolicyDecision" }
+        rule_ids:
+          type: array
+          items: { $ref: "#/components/schemas/RuleId" }
+          example: [R2, R3]
+        reasons:
+          type: array
+          items: { $ref: "#/components/schemas/PathReason" }
+
+    ReplayEvent:
+      type: object
+      additionalProperties: false
+      required: [event_id, seq, actor, tool, decision, executed, trust_level, purpose, taint_labels, source_ids, input_digest, input_preview, policy, tool_result]
+      properties:
+        event_id: { type: string, example: evt:0004 }
+        seq: { type: integer, minimum: 1, example: 4 }
+        actor: { type: string, example: document_assistant }
+        tool: { type: string, example: finance.export }
+        decision: { $ref: "#/components/schemas/ReplayDecision" }
+        executed:
+          type: boolean
+          description: False for every decision != allowed. finance.export never has executed == true.
+          example: false
+        trust_level: { $ref: "#/components/schemas/TrustLevel" }
+        purpose: { $ref: "#/components/schemas/Purpose" }
+        taint_labels:
+          type: array
+          items: { type: string }
+          example: [untrusted_document]
+        source_ids:
+          type: array
+          items: { type: string }
+          example: ["src:doc-untrusted-001", "src:grant-matrix", "src:policy-rule-3"]
+        input_digest: { $ref: "#/components/schemas/Sha256Digest" }
+        input_preview:
+          type: string
+          description: Redacted preview of tool input — never raw untrusted content.
+          example: "scope=<redacted> purpose=<claimed>"
+        policy: { $ref: "#/components/schemas/ReplayPolicyVerdict" }
+        tool_result:
+          description: Mock tool result for allowed calls; null otherwise.
+          nullable: true
+          example: null
+
+    PolicyRuleRef:
+      type: object
+      additionalProperties: false
+      required: [id, summary]
+      properties:
+        id: { $ref: "#/components/schemas/RuleId" }
+        summary: { type: string, example: "Export preconditions" }
+
+    GrantRef:
+      type: object
+      additionalProperties: false
+      required: [identity, tool, scopes]
+      properties:
+        identity: { type: string, example: document_assistant }
+        tool: { type: string, example: finance.lookup }
+        scopes:
+          type: array
+          items: { type: string }
+          example: ["finance:lookup_public"]
+
+    PolicySnapshot:
+      type: object
+      additionalProperties: false
+      required: [policy_id, rules, grants]
+      properties:
+        policy_id: { type: string, example: demo-policy-v1 }
+        rules:
+          type: array
+          items: { $ref: "#/components/schemas/PolicyRuleRef" }
+        grants:
+          type: array
+          items: { $ref: "#/components/schemas/GrantRef" }
+
+    PolicyDiffChange:
+      type: object
+      additionalProperties: false
+      required: [op, target, rule_id, summary]
+      properties:
+        op: { $ref: "#/components/schemas/ChangeOp" }
+        target: { type: string, example: "grant:document_assistant/finance.lookup" }
+        rule_id: { $ref: "#/components/schemas/RuleId" }
+        summary: { type: string, example: "revoke vestigial over-grant" }
+
+    PolicyDiff:
+      type: object
+      additionalProperties: false
+      required: [simulated, before, after, changes]
+      properties:
+        simulated:
+          type: boolean
+          description: Always true — the diff is computed in memory and never written to disk.
+          example: true
+        before: { $ref: "#/components/schemas/PolicySnapshot" }
+        after: { $ref: "#/components/schemas/PolicySnapshot" }
+        changes:
+          type: array
+          items: { $ref: "#/components/schemas/PolicyDiffChange" }
+
+    RecommendationChange:
+      type: object
+      additionalProperties: false
+      required: [change_id, op, target, rule_refs]
+      properties:
+        change_id: { type: string, example: C1 }
+        op: { $ref: "#/components/schemas/ChangeOp" }
+        target: { type: string, example: "document_assistant:finance.lookup" }
+        rule_refs:
+          type: array
+          items: { $ref: "#/components/schemas/RuleId" }
+          example: [R2]
+
+    Recommendation:
+      type: object
+      additionalProperties: false
+      required: [recommendation_id, title, changes, expected_effect, risk_if_unchanged, generated_from]
+      properties:
+        recommendation_id: { type: string, example: REC-1 }
+        title: { type: string, example: "Narrow finance reachability from document workflows" }
+        changes:
+          type: array
+          items: { $ref: "#/components/schemas/RecommendationChange" }
+        expected_effect:
+          type: object
+          additionalProperties: { $ref: "#/components/schemas/PathStatus" }
+          example: { P1: blocked, P2: blocked, P3: allowed, P5: allowed }
+        risk_if_unchanged:
+          type: string
+          example: "untrusted document content can reach finance scopes via delegation"
+        generated_from:
+          type: array
+          items: { $ref: "#/components/schemas/RuleId" }
+          example: [R1, R2, R3]
+
+    Retest:
+      type: object
+      additionalProperties: false
+      required: [retest_id, name, expected, actual, passed, evidence_ids]
+      properties:
+        retest_id: { type: string, enum: [RT-1, RT-2, RT-3], example: RT-2 }
+        name: { type: string, example: "legitimate document summarization" }
+        expected: { $ref: "#/components/schemas/PathStatus" }
+        actual: { $ref: "#/components/schemas/PathStatus" }
+        passed: { type: boolean, example: true }
+        evidence_ids:
+          type: array
+          items: { type: string }
+          example: ["evt:rt2-03"]
+
+    EvidenceTrace:
+      type: object
+      additionalProperties: false
+      required: [path_ids, event_ids]
+      properties:
+        path_ids:
+          type: array
+          items: { type: string }
+          example: [P1, P2]
+        event_ids:
+          type: array
+          items: { type: string }
+          example: [evt:0001]
+
+    EvidenceRecord:
+      type: object
+      additionalProperties: false
+      required: [evidence_id, kind, run_id, captured_at, source_id, summary, hash, prev_hash, trace]
+      properties:
+        evidence_id: { type: string, example: "src:doc-untrusted-001" }
+        kind: { $ref: "#/components/schemas/EvidenceKind" }
+        run_id: { type: string, example: 01JCV3B7Q4ZK8S6WQ4PZB0H2XK }
+        captured_at: { $ref: "#/components/schemas/Timestamp" }
+        source_id:
+          type: string
+          description: Always present; must resolve to a source in the scenario fixture.
+          example: "src:doc-untrusted-001"
+        summary: { type: string, example: "seeded untrusted vendor note containing an injection fixture" }
+        hash: { $ref: "#/components/schemas/Sha256Digest" }
+        prev_hash:
+          type: ["string", "null"]
+          description: Hash of the previous evidence record (hash chain); null for the first.
+          example: null
+        trace: { $ref: "#/components/schemas/EvidenceTrace" }
+
+    RunResponse:
+      type: object
+      additionalProperties: false
+      required: [schema_version, run_id, scenario_id, status, deterministic, generated_at, input_digest, engine, summary, graph, paths, replay_events, policy_diff, recommendation, retests, approval, evidence]
+      properties:
+        schema_version: { type: string, pattern: "^\\d+\\.\\d+\\.\\d+$", example: 1.0.0 }
+        run_id: { type: string, example: 01JCV3B7Q4ZK8S6WQ4PZB0H2XK }
+        scenario_id: { type: string, example: demo-v1 }
+        status: { $ref: "#/components/schemas/RunStatus" }
+        deterministic:
+          type: boolean
+          description: Always true — identical input produces identical output except run_id/generated_at.
+          example: true
+        generated_at: { $ref: "#/components/schemas/Timestamp" }
+        input_digest:
+          $ref: "#/components/schemas/Sha256Digest"
+          description: sha256 of canonical JSON of scenario + policy + grants.
+        engine: { $ref: "#/components/schemas/EngineInfo" }
+        summary: { $ref: "#/components/schemas/Summary" }
+        graph: { $ref: "#/components/schemas/Graph" }
+        paths:
+          type: array
+          items: { $ref: "#/components/schemas/Path" }
+        replay_events:
+          type: array
+          items: { $ref: "#/components/schemas/ReplayEvent" }
+        policy_diff: { $ref: "#/components/schemas/PolicyDiff" }
+        recommendation: { $ref: "#/components/schemas/Recommendation" }
+        retests:
+          type: array
+          minItems: 3
+          maxItems: 3
+          items: { $ref: "#/components/schemas/Retest" }
+        approval: { $ref: "#/components/schemas/ApprovalState" }
+        evidence:
+          type: array
+          items: { $ref: "#/components/schemas/EvidenceRecord" }

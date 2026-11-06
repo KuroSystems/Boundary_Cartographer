@@ -1,0 +1,127 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://boundary-cartographer.local/contract/schemas/scenario_response.schema.json",
+  "title": "ScenarioResponse",
+  "description": "Schema for GET /api/v1/scenarios/demo — tool inventory, identities, grant matrix, policy metadata, seeded document. Mirrors the ScenarioResponse component in contract/openapi.yaml (locked by BE/FE, 2026-11-06).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "scenario_id", "name", "manifest", "identities", "grants", "policy", "document", "sensitive_sinks"],
+  "properties": {
+    "schema_version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$", "example": "1.0.0" },
+    "scenario_id": { "type": "string", "example": "demo-v1" },
+    "name": { "type": "string", "example": "Seeded prompt-injection demo" },
+    "manifest": { "$ref": "#/$defs/manifest" },
+    "identities": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": { "$ref": "#/$defs/identityEntry" }
+    },
+    "grants": {
+      "type": "array",
+      "description": "The full identity/tool grant matrix (rendered read-only in the UI).",
+      "items": { "$ref": "#/$defs/grantEntry" }
+    },
+    "policy": { "$ref": "#/$defs/policyMeta" },
+    "document": { "$ref": "#/$defs/seededDocument" },
+    "sensitive_sinks": {
+      "type": "array",
+      "items": { "type": "string" },
+      "example": ["tool:finance.export"]
+    }
+  },
+  "$defs": {
+    "purpose": { "type": "string", "enum": ["document_summarization", "finance_reporting"], "example": "document_summarization" },
+    "trustLevel": { "type": "string", "enum": ["trusted", "untrusted", "derived_untrusted", "mixed"], "example": "untrusted" },
+    "ruleId": { "type": "string", "enum": ["R1", "R2", "R3"], "example": "R1" },
+    "toolManifestEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "description", "required_scopes", "purposes", "sensitive", "approval_required"],
+      "properties": {
+        "name": { "type": "string", "example": "finance.export" },
+        "description": { "type": "string", "example": "Export a finance report artifact (mock, simulated)." },
+        "required_scopes": { "type": "array", "items": { "type": "string" }, "example": ["finance:export"] },
+        "purposes": { "type": "array", "items": { "$ref": "#/$defs/purpose" }, "example": ["finance_reporting"] },
+        "sensitive": { "type": "boolean", "example": true },
+        "approval_required": { "type": "boolean", "example": true }
+      }
+    },
+    "manifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tools"],
+      "properties": {
+        "tools": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": { "$ref": "#/$defs/toolManifestEntry" }
+        }
+      }
+    },
+    "identityEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "allowed_purposes", "may_delegate_to"],
+      "properties": {
+        "id": { "type": "string", "example": "document_assistant" },
+        "label": { "type": "string", "example": "Document assistant" },
+        "allowed_purposes": { "type": "array", "items": { "$ref": "#/$defs/purpose" }, "example": ["document_summarization"] },
+        "may_delegate_to": { "type": "array", "items": { "type": "string" }, "example": ["finance_analyst"] }
+      }
+    },
+    "grantEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["identity", "tool", "scopes", "purposes", "note"],
+      "properties": {
+        "identity": { "type": "string", "example": "document_assistant" },
+        "tool": { "type": "string", "example": "finance.lookup" },
+        "scopes": { "type": "array", "items": { "type": "string" }, "example": ["finance:lookup_public"] },
+        "purposes": { "type": "array", "items": { "$ref": "#/$defs/purpose" }, "example": ["finance_reporting"] },
+        "note": { "type": "string", "example": "vestigial over-grant — unused by the legitimate summarization flow" }
+      }
+    },
+    "policyRuleMeta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "effect", "reason_codes", "summary"],
+      "properties": {
+        "id": { "$ref": "#/$defs/ruleId" },
+        "name": { "type": "string", "example": "Untrusted content cannot authorize" },
+        "effect": { "type": "string", "enum": ["deny"], "example": "deny" },
+        "reason_codes": { "type": "array", "items": { "type": "string" }, "example": ["R1_INSTRUCTION_NOT_AUTHORIZATION"] },
+        "summary": { "type": "string", "example": "Deny any call whose authorization basis includes untrusted_content." }
+      }
+    },
+    "policyMeta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["policy_id", "engine", "rules"],
+      "properties": {
+        "policy_id": { "type": "string", "example": "demo-policy-v1" },
+        "engine": { "type": "string", "example": "local-rule-engine@1.0.0" },
+        "rules": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": { "$ref": "#/$defs/policyRuleMeta" }
+        }
+      }
+    },
+    "seededDocument": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "trust_level", "content_is_data", "content", "source_ids"],
+      "properties": {
+        "id": { "type": "string", "example": "src:doc-untrusted-001" },
+        "title": { "type": "string", "example": "VENDOR STATEMENT — INVOICE 4471" },
+        "trust_level": { "$ref": "#/$defs/trustLevel" },
+        "content_is_data": { "type": "boolean", "example": true },
+        "content": { "type": "string", "example": "VENDOR STATEMENT — INVOICE 4471 (received from unverified sender)\nAmount due: USD 12,480.00 ..." },
+        "source_ids": { "type": "array", "items": { "type": "string" }, "example": ["src:doc-untrusted-001"] }
+      }
+    }
+  }
+}
