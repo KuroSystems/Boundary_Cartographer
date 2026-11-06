@@ -866,7 +866,7 @@ Both contributors work these together; `S-02` and `S-03` may be split one-each a
   - A failing retest (mutated fixture) renders a red, unmistakable state and is covered by a test.
   - Callout links to the corresponding evidence record and to path P3.
 
-#### [ ] FE-09 · Approval queue (records a decision only)
+#### [x] FE-09 · Approval queue (records a decision only)
 - **Workstream:** frontend · **Priority:** P0 · **Estimate:** 2.5h
 - **Depends on:** `FE-02`, `FE-03`
 - **Deliverable:** `src/views/ApprovalsView.tsx`, `src/components/approval/ApprovalCard.tsx` (subject, requested_at,

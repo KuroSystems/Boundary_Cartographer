@@ -620,3 +620,45 @@ tbody tr.selected {
 .retest-fail {
   color: var(--status-blocked);
 }
+
+/* ---- approvals (FE-09) ---- */
+.approval-card.decided {
+  border-left: 4px solid var(--status-candidate);
+}
+
+.consequences-text {
+  color: var(--text-dim);
+}
+
+.not-applied {
+  color: var(--status-candidate);
+  font-weight: 600;
+}
+
+.confirm-step {
+  border: 1px dashed var(--status-candidate);
+  border-radius: 6px;
+  padding: 0.6rem 0.8rem;
+}
+
+.decision-buttons button:disabled,
+.confirm-step button:disabled,
+.pending-actions input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pending-actions label {
+  font-size: 0.85rem;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.pending-actions input {
+  background: var(--bg-inset);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.3rem 0.5rem;
+  margin-left: 0.4rem;
+}
