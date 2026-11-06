@@ -9,7 +9,7 @@ import type { RunResponse, ScenarioResponse } from '../../api/types';
 import { PolicyDiff } from './PolicyDiff';
 import { RecommendationCard } from './RecommendationCard';
 import { GrantMatrix } from './GrantMatrix';
-import { RetestBlock } from './RetestBlock';
+import { RetestTable } from '../retest/RetestTable';
 import { PolicyView } from '../../views/PolicyView';
 
 const run = parseRunResponse(runFixture) as RunResponse;
@@ -67,15 +67,15 @@ describe('RecommendationCard (FE-07)', () => {
   });
 });
 
-describe('RetestBlock (FE-07/FE-08)', () => {
+describe('RetestTable (FE-07/FE-08)', () => {
   it('proves RT-1 blocked and RT-2 allowed side by side', () => {
-    renderWithProviders(<RetestBlock retests={run.retests} />);
-    const rt1 = screen.getByTestId('retest-RT-1');
-    const rt2 = screen.getByTestId('retest-RT-2');
+    renderWithProviders(<RetestTable retests={run.retests} />);
+    const rt1 = screen.getByTestId('retest-row-RT-1');
+    const rt2 = screen.getByTestId('retest-row-RT-2');
     expect(rt1).toHaveTextContent('blocked');
     expect(rt2).toHaveTextContent('allowed');
-    expect(rt1).toHaveTextContent('passed true');
-    expect(rt2).toHaveTextContent('passed true');
+    expect(rt1).toHaveTextContent('PASS');
+    expect(rt2).toHaveTextContent('PASS');
   });
 });
 
@@ -95,7 +95,8 @@ describe('PolicyView (FE-07) — no apply affordance', () => {
     renderWithProviders(<PolicyView />);
     expect(await screen.findByTestId('policy-diff')).toBeInTheDocument();
     expect(screen.getByTestId('recommendation-card')).toBeInTheDocument();
-    expect(screen.getByTestId('retest-block')).toBeInTheDocument();
+    expect(screen.getByTestId('retest-table')).toBeInTheDocument();
+    expect(screen.getByTestId('retest-callout')).toBeInTheDocument();
     expect(screen.getByTestId('rule-list')).toBeInTheDocument();
     expect(screen.getByTestId('grant-matrix')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /apply/i })).toBeNull();

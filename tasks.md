@@ -855,7 +855,7 @@ Both contributors work these together; `S-02` and `S-03` may be split one-each a
   - No "apply" button exists anywhere in this view (test asserts absence) — the app cannot change policy.
   - Tests: 4 (diff render, banner, recommendation, no-apply assertion).
 
-#### [ ] FE-08 · Retest results panel (legitimate workflow still allowed)
+#### [x] FE-08 · Retest results panel (legitimate workflow still allowed)
 - **Workstream:** frontend · **Priority:** P1 · **Estimate:** 1.5h
 - **Depends on:** `FE-07`
 - **Deliverable:** `src/components/retest/RetestTable.tsx` (RT-1/RT-2/RT-3: workflow, expected, actual, pass/fail,

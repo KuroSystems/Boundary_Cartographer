@@ -2,13 +2,15 @@ import { useDemoRun, useScenario } from '../api/useDemoData';
 import { GrantMatrix } from '../components/policy/GrantMatrix';
 import { PolicyDiff } from '../components/policy/PolicyDiff';
 import { RecommendationCard } from '../components/policy/RecommendationCard';
-import { RetestBlock } from '../components/policy/RetestBlock';
 import { RuleList } from '../components/policy/RuleList';
+import { RetestCallout } from '../components/retest/RetestCallout';
+import { RetestTable } from '../components/retest/RetestTable';
 import { Skeleton } from '../components/Skeleton';
 import { ErrorState } from '../components/ErrorState';
 
-// PolicyView (FE-07): the /policy route — recommendation, simulated diff,
-// rules, read-only grant matrix (over-grant flagged), retests. No apply button.
+// PolicyView (FE-07/FE-08): the /policy route — recommendation, simulated
+// diff, retest table + callout, rules, read-only grant matrix (over-grant
+// flagged). No apply button.
 export function PolicyView() {
   const run = useDemoRun();
   const scenario = useScenario();
@@ -33,7 +35,8 @@ export function PolicyView() {
     <div>
       <RecommendationCard rec={r.recommendation} />
       <PolicyDiff diff={r.policy_diff} />
-      <RetestBlock retests={r.retests} />
+      <RetestTable retests={r.retests} />
+      <RetestCallout retests={r.retests} />
       <RuleList scenario={scenario.data} />
       <GrantMatrix scenario={scenario.data} flagged={revoked} />
     </div>

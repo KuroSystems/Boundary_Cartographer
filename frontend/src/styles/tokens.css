@@ -595,3 +595,28 @@ tbody tr.selected {
 .risk-if-unchanged {
   color: var(--status-candidate);
 }
+
+/* ---- retest panel (FE-08) ---- */
+.retest-callout {
+  background: rgba(22, 163, 74, 0.12);
+  border: 1px solid var(--status-allowed);
+  border-left: 4px solid var(--status-allowed);
+  border-radius: 6px;
+  padding: 0.6rem 0.8rem;
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+}
+
+.retest-result {
+  font-weight: 700;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+}
+
+.retest-pass {
+  color: var(--status-allowed);
+}
+
+.retest-fail {
+  color: var(--status-blocked);
+}
