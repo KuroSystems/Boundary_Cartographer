@@ -839,7 +839,7 @@ Both contributors work these together; `S-02` and `S-03` may be split one-each a
   - Reason codes are verifier-derived text; no LLM/typed prose field is rendered.
   - Tests: 4 (safe text, blocked styling, allowed event, empty timeline).
 
-#### [ ] FE-07 · Policy diff, recommendation, and retest results
+#### [x] FE-07 · Policy diff, recommendation, and retest results
 - **Workstream:** frontend · **Priority:** P0 · **Estimate:** 2.5h
 - **Depends on:** `FE-02`, `FE-03`
 - **Deliverable:** `src/views/PolicyView.tsx`, `src/components/policy/RecommendationCard.tsx` (title, change list with

@@ -474,3 +474,124 @@ tbody tr.selected {
   color: var(--status-candidate);
   border-color: var(--status-candidate);
 }
+
+/* ---- policy view (FE-07) ---- */
+.simulated-banner {
+  color: var(--status-candidate);
+  border: 1px dashed var(--status-candidate);
+  border-radius: 6px;
+  padding: 0.5rem 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.diff-grid {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.8rem;
+}
+
+.diff-side {
+  flex: 1;
+  min-width: 260px;
+  background: var(--bg-inset);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.8rem;
+}
+
+.diff-side ul {
+  margin: 0.2rem 0 0.6rem;
+  padding-left: 1.1rem;
+}
+
+.diff-changed {
+  background: rgba(217, 119, 6, 0.15);
+  border-radius: 4px;
+}
+
+.diff-marker {
+  color: var(--status-candidate);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.diff-scopes,
+.diff-summary {
+  color: var(--text-dim);
+}
+
+.op-badge {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  border-radius: 4px;
+  padding: 0.1rem 0.4rem;
+  text-transform: uppercase;
+}
+
+.op-badge.op-revoke_grant {
+  border-color: var(--status-blocked);
+  color: var(--status-blocked);
+}
+
+.op-badge.op-add_guard,
+.op-badge.op-modify {
+  border-color: var(--status-candidate);
+  color: var(--status-candidate);
+}
+
+.op-badge.op-drop_inheritance {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.retest-grid {
+  display: flex;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.retest-card {
+  flex: 1;
+  min-width: 200px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.6rem 0.8rem;
+  background: var(--bg-inset);
+  font-size: 0.82rem;
+}
+
+.retest-passed {
+  border-left: 4px solid var(--status-allowed);
+}
+
+.retest-failed {
+  border-left: 4px solid var(--status-blocked);
+}
+
+.grant-cell {
+  font-size: 0.72rem;
+}
+
+.grant-none {
+  color: var(--text-dim);
+}
+
+.grant-flagged {
+  background: rgba(220, 38, 38, 0.15);
+}
+
+.grant-flag {
+  color: var(--status-blocked);
+  font-weight: 700;
+  font-size: 0.68rem;
+}
+
+.risk-if-unchanged {
+  color: var(--status-candidate);
+}
