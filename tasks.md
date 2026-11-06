@@ -882,7 +882,7 @@ Both contributors work these together; `S-02` and `S-03` may be split one-each a
   - A confirmation step exists for **approve** stating that nothing executes; tested.
   - Tests: 5 (pending, approve, reject, conflict, error).
 
-#### [ ] FE-10 · Evidence viewer with source IDs and traceability
+#### [x] FE-10 · Evidence viewer with source IDs and traceability
 - **Workstream:** frontend · **Priority:** P1 · **Estimate:** 1.5h
 - **Depends on:** `FE-02`, `FE-05`
 - **Deliverable:** `src/views/EvidenceView.tsx`, `src/components/evidence/EvidenceTable.tsx` (id, kind, source_id,

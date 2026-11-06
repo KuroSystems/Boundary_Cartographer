@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import type { Path } from '../../api/types';
 import { StatusPill } from '../StatusPill';
 import { primaryReason } from '../../lib/layout';
@@ -60,7 +61,11 @@ export function PathDetailPanel({ path }: { path: Path | null }) {
               <li key={i}>
                 <code className="mono">{r.code}</code> (rule <code className="mono">{r.rule_id}</code>:{' '}
                 {r.message} — evidence:{' '}
-                <code className="mono">{r.evidence_ids.join(', ')}</code>
+                {r.evidence_ids.map((e) => (
+                  <Link key={e} to={`/evidence#${encodeURIComponent(e)}`} className="mono source-id-link">
+                    {e}
+                  </Link>
+                ))}
               </li>
             ))}
           </ul>

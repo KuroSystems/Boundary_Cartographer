@@ -53,6 +53,6 @@ describe('App shell (FE-01 smoke test)', () => {
     renderApp('/approvals');
     expect((await screen.findAllByText(/approval queue/i)).length).toBeGreaterThan(0);
     renderApp('/evidence');
-    expect(await screen.findByText(/evidence chain/i)).toBeInTheDocument();
+    expect(await screen.findByTestId('evidence-table')).toBeInTheDocument();
   });
 });

@@ -662,3 +662,56 @@ tbody tr.selected {
   padding: 0.3rem 0.5rem;
   margin-left: 0.4rem;
 }
+
+/* ---- evidence view (FE-10) ---- */
+.evidence-view {
+  position: relative;
+}
+
+.evidence-id {
+  background: none;
+  color: var(--accent);
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-size: 0.82rem;
+}
+
+.evidence-id.selected {
+  text-decoration: underline;
+}
+
+.hash-chain {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+}
+
+.event-ref {
+  margin-right: 0.4rem;
+  font-size: 0.72rem;
+  color: var(--text-dim);
+}
+
+.evidence-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 380px;
+  max-width: 90vw;
+  height: 100vh;
+  overflow: auto;
+  background: var(--bg-panel);
+  border-left: 1px solid var(--accent);
+  padding: 1rem;
+  z-index: 10;
+  font-size: 0.85rem;
+}
+
+.drawer-close {
+  float: right;
+}
+
+.hash-full {
+  word-break: break-all;
+  font-size: 0.72rem;
+}
