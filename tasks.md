@@ -713,7 +713,7 @@ Both contributors work these together; `S-02` and `S-03` may be split one-each a
   - `pytest -q` (whole backend suite) green offline, no skipped tests except the optional OPA parity test.
   - Test run leaves no artifacts outside `tmp_path` (DB path injected via env).
 
-#### [ ] BE-13 · Safety and offline guarantees test suite
+#### [x] BE-13 · Safety and offline guarantees test suite
 - **Workstream:** backend · **Priority:** P0 · **Estimate:** 2h
 - **Depends on:** `BE-09`, `BE-11`
 - **Deliverable:** `backend/tests/test_safety.py` — global guards: `socket.socket` patched to raise during the whole

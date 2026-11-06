@@ -26,6 +26,61 @@ def _isolated_db(tmp_path, monkeypatch):
     yield tmp_path
 
 
+# ---------------------------------------------------------------------------
+# BE-13 global safety guards — active for the WHOLE suite:
+# 1. no network: socket.socket / socket.create_connection raise immediately;
+# 2. no writes outside tmp_path (protects app/fixtures and the rest of the repo).
+# ---------------------------------------------------------------------------
+
+@pytest.fixture(autouse=True)
+def _no_network(monkeypatch):
+    """Block all outbound network while keeping local socketpair() working.
+
+    Patching socket.socket itself would break asyncio's internal socketpair
+    (used by the ASGI TestClient), so the guard trips at connect/DNS time —
+    any real network attempt still fails immediately and loudly.
+    """
+    import socket
+
+    def _blocked(*args, **kwargs):
+        raise AssertionError(
+            "network access attempted during the test suite — the MVP is fully "
+            "offline after bootstrap; this guard tripped"
+        )
+
+    monkeypatch.setattr(socket.socket, "connect", _blocked)
+    monkeypatch.setattr(socket.socket, "connect_ex", _blocked)
+    monkeypatch.setattr(socket, "create_connection", _blocked)
+    monkeypatch.setattr(socket, "getaddrinfo", _blocked)
+    yield
+
+
+@pytest.fixture(autouse=True)
+def _no_writes_outside_tmp(tmp_path, monkeypatch):
+    import builtins
+    import io
+
+    real_open = builtins.open
+    tmp_root = str(tmp_path.resolve())
+
+    def _guarded_open(file, mode="r", *args, **kwargs):
+        if any(m in mode for m in ("w", "a", "x", "+")):
+            try:
+                resolved = str(Path(file).resolve())
+            except (TypeError, ValueError):
+                resolved = str(file)
+            if not resolved.startswith(tmp_root):
+                raise AssertionError(
+                    f"write outside tmp_path blocked: {file} (mode={mode!r}) — "
+                    "tests must not modify the repo or fixtures"
+                )
+        return real_open(file, mode, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "open", _guarded_open)
+    monkeypatch.setattr(io, "open", _guarded_open)
+    yield
+
+
 @pytest.fixture
 def client() -> TestClient:
     return TestClient(app)
