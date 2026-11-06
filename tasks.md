@@ -622,7 +622,7 @@ Both contributors work these together; `S-02` and `S-03` may be split one-each a
     **allowed** (prevents the "deny everything" cheat).
   - `pytest backend/tests/test_policy_evaluator.py` green; each rule's reason codes covered.
 
-#### [ ] BE-08 · Safe offline injection replay engine
+#### [x] BE-08 · Safe offline injection replay engine
 - **Workstream:** backend · **Priority:** P0 · **Estimate:** 3h
 - **Depends on:** `BE-04`, `BE-06`, `BE-07`
 - **Deliverable:** `backend/app/replay/engine.py` — walks a candidate path hop by hop, builds a `CallContext`

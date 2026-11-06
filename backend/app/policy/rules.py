@@ -37,7 +37,7 @@ def rule_r1(ctx: CallContext) -> list[RuleFinding]:
     if ctx.approval is not None and ctx.approval.origin == AuthBasis.UNTRUSTED_CONTENT:
         findings.append(RuleFinding(
             RuleId.R1, "R1_INSTRUCTION_NOT_AUTHORIZATION",
-            f"approval claim originated from untrusted content (ref: {ctx.approval.approval_id})",
+            "approval claim originated from untrusted content",
         ))
     return findings
 
@@ -85,10 +85,14 @@ def rule_r3(ctx: CallContext) -> list[RuleFinding]:
         or ctx.approval.status.value != "approved"
         or ctx.approval.origin != AuthBasis.HUMAN_APPROVAL
     ):
-        findings.append(RuleFinding(
-            RuleId.R3, "R3_NO_VALID_APPROVAL",
-            "no valid human approval from the approval queue exists",
-        ))
+        if ctx.approval is not None:
+            message = (
+                "approval claim not valid "
+                f"(status={ctx.approval.status.value}, origin={ctx.approval.origin.value})"
+            )
+        else:
+            message = "no valid human approval from the approval queue exists"
+        findings.append(RuleFinding(RuleId.R3, "R3_NO_VALID_APPROVAL", message))
     if ctx.args_taint:
         findings.append(RuleFinding(
             RuleId.R3, "R3_TAINTED_ARGS",
