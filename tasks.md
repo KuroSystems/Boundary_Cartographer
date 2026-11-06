@@ -571,7 +571,7 @@ Both contributors work these together; `S-02` and `S-03` may be split one-each a
     asserts `document.read` output is returned verbatim as a string and never interpreted).
   - `pytest backend/tests/test_tools.py` green.
 
-#### [ ] BE-05 · NetworkX graph construction
+#### [x] BE-05 · NetworkX graph construction
 - **Workstream:** backend · **Priority:** P0 · **Estimate:** 2.5h
 - **Depends on:** `BE-02`, `BE-04`
 - **Deliverable:** `backend/app/graph/build.py` — nodes for the seeded source, both identities, four tools, the
