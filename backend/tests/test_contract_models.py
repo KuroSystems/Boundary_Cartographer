@@ -258,8 +258,11 @@ def test_approval_item_must_be_records_only():
 
 def test_run_response_rejects_executed_finance_export():
     fixture = json.loads(json.dumps(RUN_FIXTURE))
-    fixture["replay_events"][3]["executed"] = True  # evt:0004 is finance.export
-    fixture["replay_events"][3]["decision"] = "allowed"
+    export_idx = next(
+        i for i, e in enumerate(fixture["replay_events"]) if e["tool"] == "finance.export"
+    )
+    fixture["replay_events"][export_idx]["executed"] = True
+    fixture["replay_events"][export_idx]["decision"] = "allowed"
     with pytest.raises(ValidationError):
         RunResponse.model_validate(fixture)
 

@@ -698,7 +698,7 @@ Both contributors work these together; `S-02` and `S-03` may be split one-each a
     snapshot in `run.input_digest` and a `policies` hash check).
   - Served `/api/v1/openapi.json` contains exactly the documented 5 paths and the documented error codes.
 
-#### [ ] BE-12 · API + contract tests against the frozen schema and golden fixture
+#### [x] BE-12 · API + contract tests against the frozen schema and golden fixture
 - **Workstream:** backend · **Priority:** P0 · **Estimate:** 3h
 - **Depends on:** `BE-11`, `S-03`
 - **Deliverable:** `backend/tests/test_api_scenarios.py`, `test_api_runs.py`, `test_api_approval.py`,

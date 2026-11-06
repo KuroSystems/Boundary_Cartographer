@@ -9,7 +9,7 @@ for `RunResponse` / `ScenarioResponse` is diffed against those contract schemas 
 from datetime import datetime
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_serializer, model_validator
 
 from .enums import (
     ApprovalStatus,
@@ -47,6 +47,15 @@ class Node(ContractModel):
     risk: NodeRisk | None = None
     scopes: list[str] = Field(default_factory=list)
     source_ids: list[str]
+
+    @model_serializer(mode="wrap")
+    def _omit_null_risk(self, handler):
+        # The frozen schema makes `risk` optional but not nullable: omit it
+        # when unset instead of emitting null.
+        data = handler(self)
+        if data.get("risk") is None:
+            data.pop("risk", None)
+        return data
 
 
 class Edge(ContractModel):
