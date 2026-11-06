@@ -603,7 +603,7 @@ Both contributors work these together; `S-02` and `S-03` may be split one-each a
     candidate set (and the test proves the code does not fall back to "confirmed").
   - Path search does not import the policy engine (import-boundary test) — classification is `BE-07`'s job.
 
-#### [ ] BE-07 · Deterministic policy evaluator (R1, R2, R3)
+#### [x] BE-07 · Deterministic policy evaluator (R1, R2, R3)
 - **Workstream:** backend · **Priority:** P0 · **Estimate:** 4h
 - **Depends on:** `BE-01`, `BE-02`
 - **Deliverable:** `backend/app/policy/context.py` (`CallContext`: actor, tool, purpose, `purpose_origin`,
