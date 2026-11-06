@@ -507,7 +507,7 @@ Both contributors work these together; `S-02` and `S-03` may be split one-each a
 
 ---
 
-#### [ ] BE-01 · Typed domain schemas and enums
+#### [x] BE-01 · Typed domain schemas and enums
 - **Workstream:** backend · **Priority:** P0 · **Estimate:** 2.5h
 - **Depends on:** `S-02`
 - **Deliverable:** `backend/app/contracts/enums.py` (`PathStatus`, `Basis`, `Decision`, `TrustLevel`, `NodeKind`,
