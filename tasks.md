@@ -811,7 +811,7 @@ Both contributors work these together; `S-02` and `S-03` may be split one-each a
   - Keyboard: paths reachable via Tab; each node has an `aria-label` including kind and label.
   - Layout is stable across reloads (snapshot of node positions in a unit test).
 
-#### [ ] FE-05 · Path table with status/reason semantics and filters
+#### [x] FE-05 · Path table with status/reason semantics and filters
 - **Workstream:** frontend · **Priority:** P1 · **Estimate:** 2h
 - **Depends on:** `FE-04`
 - **Deliverable:** `src/components/PathTable.tsx` (origin→sink, stated purpose, taint badge, status, primary reason,

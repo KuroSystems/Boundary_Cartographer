@@ -21,6 +21,7 @@ export type Graph = Schemas['Graph'];
 export type GraphNode = Schemas['GraphNode'];
 export type GraphEdge = Schemas['GraphEdge'];
 export type Summary = Schemas['Summary'];
+export type SummaryCounts = Schemas['Summary']['counts'];
 export type PolicyDiff = Schemas['PolicyDiff'];
 export type PolicyDiffChange = Schemas['PolicyDiffChange'];
 export type Recommendation = Schemas['Recommendation'];

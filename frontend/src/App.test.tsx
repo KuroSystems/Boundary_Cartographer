@@ -34,7 +34,7 @@ describe('App shell (FE-01 smoke test)', () => {
 
   it('renders the overview route with fixture data and no server', async () => {
     renderApp('/');
-    expect(await screen.findByText(/path verdicts/i)).toBeInTheDocument();
+    expect(await screen.findByTestId('path-table')).toBeInTheDocument();
     expect(screen.getByText('P1')).toBeInTheDocument();
     expect(screen.getAllByText('blocked').length).toBeGreaterThan(0);
   });
